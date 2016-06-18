@@ -4,18 +4,19 @@ import diode._
 import diode.react._
 
 // Model
-case class RootModel(colorArea: ColorArea, palette: List[LAB] = Nil)
+case class RootModel(colorArea: ColorArea, palette: IndexedSeq[LAB] = IndexedSeq.empty)
 case class ColorArea(luminance: Double, chroma: Double)
 
 // Actions
 case class UpdateLuminance(luminance: Double)
 case class UpdateChroma(chroma: Double)
 case class AddColor(color: LAB)
+case class UpdateColor(index: Int, color: LAB)
 
 // Circuit
 object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
   // define initial value for the application model
-  def initialModel = RootModel(ColorArea(70, 100), List(
+  def initialModel = RootModel(ColorArea(70, 100), Array(
     LAB(30, -75, 20),
     LAB(60, 15, 12),
     LAB(70, 100, 0),
@@ -33,7 +34,9 @@ object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
   val paletteHandler = new ActionHandler(zoomRW(_.palette)((m, v) => m.copy(palette = v))) {
     override def handle = {
       case AddColor(c) =>
-        updated(c :: value)
+        updated(value :+ c)
+      case UpdateColor(index, c) =>
+        updated((value.take(index) :+ c) ++ value.drop(index + 1))
     }
   }
 
