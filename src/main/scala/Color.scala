@@ -3,9 +3,15 @@ package rainbow
 import scala.scalajs.js
 import js.annotation._
 
-trait Color {
-  def toRGB = ???
-  def toLAB = ???
+final case class LAB(l: Double, a: Double, b: Double) {
+  def toRGB: RGB = {
+    val rgb = ColorConversion.labToRGB(l, a, b)
+    RGB(rgb(0), rgb(1), rgb(2))
+  }
+  def toCSS = toRGB.toCSS
+}
+final case class RGB(r: Int, g: Int, b: Int) {
+  def toCSS = s"rgb($r, $g, $b)"
 }
 
 @JSExport
@@ -33,7 +39,7 @@ object ColorConversion {
   }
 
   @JSExport
-  @inline final def labToRGB(l: Double, a: Double, b: Double): Array[Double] = {
+  @inline final def labToRGB(l: Double, a: Double, b: Double): Array[Int] = {
     // https://en.wikipedia.org/wiki/Lab_color_space#CIELAB-CIEXYZ_conversions
     var Y = (l + 16) / 116
     var X = a / 500 + Y
@@ -58,9 +64,9 @@ object ColorConversion {
     G = csrgb(G)
     B = csrgb(B)
 
-    R = (R * 255) //.max(0).min(255) //0.max(round(R * 255).toInt.min(255))
-    G = (G * 255) //.max(0).min(255) //0.max(round(G * 255).toInt.min(255))
-    B = (B * 255) //.max(0).min(255) //0.max(round(B * 255).toInt.min(255))
-    Array(R, G, B)
+    val Ri = (R * 255).toInt.max(0).min(255)
+    val Gi = (G * 255).toInt.max(0).min(255)
+    val Bi = (B * 255).toInt.max(0).min(255)
+    Array(Ri, Gi, Bi)
   }
 }
