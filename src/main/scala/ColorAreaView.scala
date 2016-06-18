@@ -59,13 +59,13 @@ object ColorAreaView {
     refa match {
       case Some(ref) =>
         val (first, second) = (if (ref <= a) (ref, a) else (a, ref))
-        stroke("black", 0, first)
-        stroke(if (ref <= a) "rgb(85, 85, 85)" else "rgb(170, 170, 170)", first, second)
-        stroke("white", second, 1)
+        stroke("white", 0, first)
+        stroke(if (ref <= a) "rgb(170, 170, 170)" else "rgb(85, 85, 85)", first, second)
+        stroke("black", second, 1)
 
       case None =>
-        stroke("black", 0, a)
-        stroke("white", a, 1)
+        stroke("white", 0, a)
+        stroke("black", a, 1)
     }
 
   }
