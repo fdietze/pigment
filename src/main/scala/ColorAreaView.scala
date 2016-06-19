@@ -65,12 +65,11 @@ object ColorAreaView {
     var dragOffsetY: Double = 0
 
     def initCanvas(p: Props) = Callback {
-      val canvas = document.getElementById("color-area-canvas").asInstanceOf[html.Canvas]
+      val canvas = document.getElementById("color-area-canvas-fg").asInstanceOf[html.Canvas]
       val width = canvas.width.toDouble
       val height = canvas.height.toDouble
 
       canvas.addEventListener("mousedown", (event: MouseEvent) => {
-        // println("down: " + event.clientX);
         def inside(index: Int): Boolean = {
           val c = p.palette(index)
           val cx = c.a * 100.0 / p.chroma + width / 2
@@ -80,7 +79,6 @@ object ColorAreaView {
           (mx - cx) * (mx - cx) + (my - cy) * (my - cy) <= (colorRadius + colorBorder / 2.0) * (colorRadius + colorBorder / 2.0)
         }
         (0 until p.palette.size).reverse.find(inside).foreach { i =>
-          println(s"down $i")
           val col = p.palette(i)
           draggingPalette = Some((col, i))
           val mx = event.clientX - event.srcElement.getBoundingClientRect.left
@@ -88,7 +86,7 @@ object ColorAreaView {
           dragOffsetX = (100.0 / p.chroma) * col.a - mx
           dragOffsetY = (100.0 / p.chroma) * col.b - my
         }
-        event.stopPropagation()
+        event.stopImmediatePropagation()
       })
       canvas.addEventListener("mousemove", (event: MouseEvent) => {
         draggingPalette match {
@@ -99,30 +97,29 @@ object ColorAreaView {
               a = (p.chroma / 100.0) * (mx + dragOffsetX),
               b = (p.chroma / 100.0) * (my + dragOffsetY)
             )
-            // println(s"drag $i d:($dx,$dy) $col -> $newCol")
             draggingPalette = Some((newCol, i))
-            draw(p)
+            drawForeground(p)
 
           case None =>
         }
-        event.stopPropagation()
+        event.stopImmediatePropagation()
       })
       canvas.addEventListener("mouseup", (event: MouseEvent) => {
-        println(s"up")
         draggingPalette match {
           case Some((col, i)) =>
             draggingPalette = None
             p.proxy.dispatch(UpdateColor(i, col)).runNow()
           case None =>
         }
-        event.stopPropagation()
+        event.stopImmediatePropagation()
       })
 
-      draw(p)
+      drawBackground(p)
+      drawForeground(p)
     }
 
-    def draw(p: Props) {
-      val canvas = document.getElementById("color-area-canvas").asInstanceOf[html.Canvas]
+    def drawBackground(p: Props) {
+      val canvas = document.getElementById("color-area-canvas-bg").asInstanceOf[html.Canvas]
       val width = canvas.width.toDouble
       val height = canvas.height.toDouble
 
@@ -144,8 +141,18 @@ object ColorAreaView {
       val duration = System.currentTimeMillis - start
       println(s"${duration}ms")
       ctx.putImageData(imageData, 0, 0)
+    }
+
+    def drawForeground(p: Props) {
+      val canvas = document.getElementById("color-area-canvas-fg").asInstanceOf[html.Canvas]
+      val width = canvas.width.toDouble
+      val height = canvas.height.toDouble
+
+      val ctx = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
 
       ctx.asInstanceOf[js.Dynamic].resetTransform() //TODO: add to scalajs.dom library
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
       ctx.translate(width / 2, height / 2)
       if (p.chroma > 0) {
         ctx.scale(100.0 / p.chroma, 100.0 / p.chroma)
@@ -184,10 +191,21 @@ object ColorAreaView {
         <.input(^.`type` := "range", ^.value := p.chroma, ^.min := 0, ^.max := 128, ^.step := 1, ^.onChange ==> setChroma(p)), //TODO: change zoom
         <.input(^.value := p.chroma, ^.onChange ==> setChroma(p), ^.size := 3),
         <.br,
-        <.canvas(
-          ^.id := "color-area-canvas",
-          width := 256,
-          height := 256
+        <.div(
+          ^.position := "relative",
+          <.canvas(
+            ^.id := "color-area-canvas-bg",
+            width := 256,
+            height := 256,
+            ^.position := "absolute"
+          ),
+          <.canvas(
+            ^.id := "color-area-canvas-fg",
+            width := 256,
+            height := 256,
+            ^.position := "absolute",
+            ^.cursor := "default"
+          )
         )
       )
     }
