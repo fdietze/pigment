@@ -33,12 +33,10 @@ object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
 
   val paletteHandler = new ActionHandler(zoomRW(_.palette)((m, v) => m.copy(palette = v))) {
     override def handle = {
-      case AddColor(c) =>
-        updated(value :+ c)
-      case UpdateColor(index, c) =>
-        updated((value.take(index) :+ c) ++ value.drop(index + 1))
+      case AddColor(c) => updated(value :+ c)
+      case UpdateColor(index, c) => updated(value.updated(index, c))
     }
   }
 
-  override val actionHandler = composeHandlers(colorAreaHandler)
+  override val actionHandler = composeHandlers(colorAreaHandler, paletteHandler)
 }
