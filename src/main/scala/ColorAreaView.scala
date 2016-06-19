@@ -36,30 +36,33 @@ object ColorAreaView {
     def initCanvas(p: Props) = Callback {
       val canvas = document.getElementById("color-area-canvas-fg").asInstanceOf[html.Canvas]
 
-      canvas.addEventListener("mousedown", (event: MouseEvent) => {
+      //TODO: native drag event
+      canvas.onmousedown = (e: MouseEvent) => {
         def inside(index: Int): Boolean = {
           val c = p.palette(index)
           val cx = c.a * p.zoom + width / 2
           val cy = c.b * p.zoom + height / 2
-          val mx = event.clientX - event.srcElement.getBoundingClientRect.left
-          val my = event.clientY - event.srcElement.getBoundingClientRect.top
+          val mx = e.clientX - e.srcElement.getBoundingClientRect.left
+          val my = e.clientY - e.srcElement.getBoundingClientRect.top
           (mx - cx) * (mx - cx) + (my - cy) * (my - cy) <= (colorRadius + colorBorder / 2.0) * (colorRadius + colorBorder / 2.0)
         }
         (0 until p.palette.size).reverse.find(inside).foreach { i =>
           val col = p.palette(i)
           draggingPalette = Some((col, i))
-          val mx = event.clientX - event.srcElement.getBoundingClientRect.left
-          val my = event.clientY - event.srcElement.getBoundingClientRect.top
+          val mx = e.clientX - e.srcElement.getBoundingClientRect.left
+          val my = e.clientY - e.srcElement.getBoundingClientRect.top
           dragOffsetX = (p.zoom) * col.a - mx
           dragOffsetY = (p.zoom) * col.b - my
         }
-        event.stopImmediatePropagation()
-      })
-      canvas.addEventListener("mousemove", (event: MouseEvent) => {
+        e.stopImmediatePropagation()
+      }
+
+      canvas.onmousemove = (e: MouseEvent) => {
+        println("drag")
         draggingPalette match {
           case Some((col, i)) =>
-            val mx = event.clientX - event.srcElement.getBoundingClientRect().left
-            val my = event.clientY - event.srcElement.getBoundingClientRect().top
+            val mx = e.clientX - e.srcElement.getBoundingClientRect().left
+            val my = e.clientY - e.srcElement.getBoundingClientRect().top
             val newCol = col.copy(
               a = (mx + dragOffsetX) / p.zoom,
               b = (my + dragOffsetY) / p.zoom
@@ -69,17 +72,20 @@ object ColorAreaView {
 
           case None =>
         }
-        event.stopImmediatePropagation()
-      })
-      canvas.addEventListener("mouseup", (event: MouseEvent) => {
+        e.stopImmediatePropagation()
+      }
+
+      canvas.onmouseup = (e: MouseEvent) => {
+        println("dragend")
         draggingPalette match {
           case Some((col, i)) =>
             draggingPalette = None
             p.proxy.dispatch(UpdateColor(i, col)).runNow()
+            println(col)
           case None =>
         }
-        event.stopImmediatePropagation()
-      })
+        e.stopImmediatePropagation()
+      }
 
       drawBackground(p)
       drawForeground(p)
