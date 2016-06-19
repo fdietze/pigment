@@ -4,10 +4,23 @@ import scala.scalajs.js
 import org.scalajs.dom._
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.prefix_<^._
+
+import diode._
+import diode.react._
 
 object Main extends js.JSApp {
   def main {
-    val colorArea = AppCircuit.connect(m => m)(m => ColorAreaView(m))
-    ReactDOM.render(colorArea, document.getElementById("container"))
+    val mainView = AppCircuit.connect(m => m)(m => MainView(m))
+    ReactDOM.render(mainView, document.getElementById("container"))
   }
+
+  val MainView = ReactComponentB[ModelProxy[RootModel]]("MainView")
+    .render_P { m =>
+      <.div(
+        ColorAreaView(m),
+        MatrixPreview(m)
+      )
+    }
+    .build
 }
