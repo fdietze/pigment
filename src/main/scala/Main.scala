@@ -18,6 +18,8 @@ object Main extends js.JSApp {
   val MainView = ReactComponentB[ModelProxy[RootModel]]("MainView")
     .render_P { m =>
       <.div(
+        ^.display := "flex",
+        ^.flex := "1 1 auto",
         ColorAreaView(m),
         MatrixPreview(m)
       )

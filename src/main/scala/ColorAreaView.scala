@@ -20,6 +20,7 @@ object ColorAreaView {
   val colorBorder = 2.0
   val chromaCircleRadius = width * 0.4
   val chromaCircleBorder = 2.0
+  val dragTolerance = 3
 
   case class Props(proxy: ModelProxy[RootModel]) {
     def luminance = proxy.value.colorArea.luminance
@@ -38,7 +39,10 @@ object ColorAreaView {
   }
 
   class Backend($: BackendScope[Props, Unit]) {
+    var draggingLuminance = false
     var draggingPalette: Option[(LAB, Int)] = None
+    var dragStartX: Double = 0
+    var dragStartY: Double = 0
     var dragOffsetX: Double = 0
     var dragOffsetY: Double = 0
 
@@ -56,7 +60,6 @@ object ColorAreaView {
           case None =>
             p.proxy.dispatch(UpdateChroma((p.chroma + e.deltaY / 10.0).max(0).min(128))).runNow()
         }
-        console.log(e)
         e.stopImmediatePropagation()
         false
       }
@@ -66,20 +69,26 @@ object ColorAreaView {
         val mx = e.clientX - e.srcElement.getBoundingClientRect.left
         val my = e.clientY - e.srcElement.getBoundingClientRect.top
 
-        (0 until p.palette.size).reverse.find(i => p.insideColor(i, mx, my)).foreach { i =>
-          val col = p.palette(i)
-          draggingPalette = Some((col, i))
-          dragOffsetX = (p.zoom) * col.a - mx
-          dragOffsetY = (p.zoom) * col.b - my
+        (0 until p.palette.size).reverse.find(i => p.insideColor(i, mx, my)) match {
+          case Some(i) =>
+            val col = p.palette(i)
+            dragStartX = mx
+            dragStartY = my
+            dragOffsetX = (p.zoom) * col.a - mx
+            dragOffsetY = (p.zoom) * col.b - my
+            draggingPalette = Some((col, i))
+          case None =>
+            draggingLuminance = true
         }
         e.stopImmediatePropagation()
       }
 
       canvas.onmousemove = (e: MouseEvent) => {
+        val mx = e.clientX - e.srcElement.getBoundingClientRect().left
+        val my = e.clientY - e.srcElement.getBoundingClientRect().top
+
         draggingPalette match {
           case Some((col, i)) =>
-            val mx = e.clientX - e.srcElement.getBoundingClientRect().left
-            val my = e.clientY - e.srcElement.getBoundingClientRect().top
             val newCol = col.copy(
               a = (mx + dragOffsetX) / p.zoom,
               b = (my + dragOffsetY) / p.zoom
@@ -88,18 +97,35 @@ object ColorAreaView {
             p.proxy.dispatch(UpdateColor(i, col)).runNow()
             drawForeground(p)
 
-          case None =>
+          case None if draggingLuminance =>
+            val luminance = ((Math.PI * 2.5 + Math.atan2(my - height / 2.0, mx - width / 2.0)) / (Math.PI * 2) * 100.0) % 100.0
+            p.proxy.dispatch(UpdateLuminance(luminance)).runNow()
+
+          case _ =>
         }
         e.stopImmediatePropagation()
       }
 
       canvas.onmouseup = (e: MouseEvent) => {
+        val mx = e.clientX - e.srcElement.getBoundingClientRect().left
+        val my = e.clientY - e.srcElement.getBoundingClientRect().top
+
         draggingPalette match {
           case Some((col, i)) =>
-            draggingPalette = None
-            p.proxy.dispatch(UpdateColor(i, col)).runNow()
-          case None =>
+            if (dragStartX == mx && dragStartY == my) {
+              p.proxy.dispatch(UpdateLuminance(col.luminance)).runNow()
+              p.proxy.dispatch(UpdateChroma(col.chroma)).runNow()
+            } else
+              p.proxy.dispatch(UpdateColor(i, col)).runNow()
+
+          case None if draggingLuminance =>
+            val luminance = ((Math.PI * 2.5 + Math.atan2(my - height / 2.0, mx - width / 2.0)) / (Math.PI * 2) * 100.0) % 100.0
+            p.proxy.dispatch(UpdateLuminance(luminance)).runNow()
+
+          case _ =>
         }
+        draggingPalette = None
+        draggingLuminance = false
         e.stopImmediatePropagation()
       }
 
@@ -182,12 +208,6 @@ object ColorAreaView {
     val heightAttr = "height".reactAttr
     def render(p: Props) = {
       <.div(
-        <.input(^.`type` := "range", ^.value := p.chroma, ^.min := 0, ^.max := 128, ^.step := 1, ^.onChange ==> setChroma(p)),
-        <.input(^.value := p.chroma, ^.onChange ==> setChroma(p), ^.size := 3),
-        <.br,
-        <.input(^.`type` := "range", ^.value := p.luminance, ^.min := 0, ^.max := 100, ^.step := 1, ^.onChange ==> setLuminance(p)),
-        <.input(^.value := p.luminance, ^.onChange ==> setLuminance(p), ^.size := 3),
-        <.br,
         <.div(
           ^.width := width,
           ^.height := height,
@@ -206,6 +226,11 @@ object ColorAreaView {
             ^.cursor := "default"
           )
         )
+      // <.br,
+      // <.input(^.`type` := "range", ^.value := p.chroma, ^.min := 0, ^.max := 128, ^.step := 1, ^.onChange ==> setChroma(p)),
+      // <.input(^.value := p.chroma, ^.onChange ==> setChroma(p), ^.size := 3),
+      // <.br,
+      // <.input(^.`type` := "range", ^.width := width, ^.value := p.luminance, ^.min := 0, ^.max := 100, ^.step := 1, ^.onChange ==> setLuminance(p))
       )
     }
   }
