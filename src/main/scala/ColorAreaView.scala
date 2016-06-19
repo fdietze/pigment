@@ -13,51 +13,20 @@ import diode.react._
 import scala.util.Try
 
 object ColorAreaView {
-  def arcStroke(ctx: CanvasRenderingContext2D, x: Double, y: Double, r: Double, color: String, start: Double = 0.0, end: Double = 1.0) {
-    ctx.beginPath()
-    ctx.strokeStyle = color
-    ctx.arc(x, y, r,
-      Math.PI * (1.5 + 2 * start),
-      Math.PI * (1.5 + 2 * end))
-    ctx.stroke()
-  }
-  def arcFill(ctx: CanvasRenderingContext2D, x: Double, y: Double, r: Double, color: String, start: Double = 0.0, end: Double = 1.0) {
-    ctx.beginPath()
-    ctx.fillStyle = color
-    ctx.arc(x, y, r,
-      Math.PI * (1.5 + 2 * start),
-      Math.PI * (1.5 + 2 * end))
-    ctx.fill()
-  }
 
-  def percentCirle(ctx: CanvasRenderingContext2D, x: Double, y: Double, r: Double, width: Double, a: Double, refa: Option[Double] = None, fillColor: Option[String] = None) {
-    def stroke(color: String, start: Double = 0.0, end: Double = 1.0) { arcStroke(ctx, x, y, r, color, start, end) }
-    def fill(color: String, start: Double = 0.0, end: Double = 1.0) { arcFill(ctx, x, y, r, color, start, end) }
-    fillColor foreach (fill(_))
-
-    ctx.lineWidth = width
-
-    refa match {
-      case Some(ref) =>
-        val (first, second) = (if (ref <= a) (ref, a) else (a, ref))
-        stroke("white", 0, first)
-        stroke(if (ref <= a) "rgb(170, 170, 170)" else "rgb(85, 85, 85)", first, second)
-        stroke("black", second, 1)
-
-      case None =>
-        stroke("white", 0, a)
-        stroke("black", a, 1)
-    }
-  }
+  val width = 200.0
+  val height = 200.0
+  val colorRadius = 10.0
+  val colorBorder = 2.0
+  val chromaCircleRadius = width * 0.4
+  val chromaCircleBorder = 2.0
 
   case class Props(proxy: ModelProxy[RootModel]) {
     def luminance = proxy.value.colorArea.luminance
     def chroma = proxy.value.colorArea.chroma
     def palette = proxy.value.palette
+    def zoom = chromaCircleRadius / chroma
   }
-
-  val colorRadius = 10.0
-  val colorBorder = 2.0
 
   class Backend($: BackendScope[Props, Unit]) {
     var draggingPalette: Option[(LAB, Int)] = None
@@ -66,14 +35,12 @@ object ColorAreaView {
 
     def initCanvas(p: Props) = Callback {
       val canvas = document.getElementById("color-area-canvas-fg").asInstanceOf[html.Canvas]
-      val width = canvas.width.toDouble
-      val height = canvas.height.toDouble
 
       canvas.addEventListener("mousedown", (event: MouseEvent) => {
         def inside(index: Int): Boolean = {
           val c = p.palette(index)
-          val cx = c.a * 100.0 / p.chroma + width / 2
-          val cy = c.b * 100.0 / p.chroma + height / 2
+          val cx = c.a * p.zoom + width / 2
+          val cy = c.b * p.zoom + height / 2
           val mx = event.clientX - event.srcElement.getBoundingClientRect.left
           val my = event.clientY - event.srcElement.getBoundingClientRect.top
           (mx - cx) * (mx - cx) + (my - cy) * (my - cy) <= (colorRadius + colorBorder / 2.0) * (colorRadius + colorBorder / 2.0)
@@ -83,8 +50,8 @@ object ColorAreaView {
           draggingPalette = Some((col, i))
           val mx = event.clientX - event.srcElement.getBoundingClientRect.left
           val my = event.clientY - event.srcElement.getBoundingClientRect.top
-          dragOffsetX = (100.0 / p.chroma) * col.a - mx
-          dragOffsetY = (100.0 / p.chroma) * col.b - my
+          dragOffsetX = (p.zoom) * col.a - mx
+          dragOffsetY = (p.zoom) * col.b - my
         }
         event.stopImmediatePropagation()
       })
@@ -94,8 +61,8 @@ object ColorAreaView {
             val mx = event.clientX - event.srcElement.getBoundingClientRect().left
             val my = event.clientY - event.srcElement.getBoundingClientRect().top
             val newCol = col.copy(
-              a = (p.chroma / 100.0) * (mx + dragOffsetX),
-              b = (p.chroma / 100.0) * (my + dragOffsetY)
+              a = (mx + dragOffsetX) / p.zoom,
+              b = (my + dragOffsetY) / p.zoom
             )
             draggingPalette = Some((newCol, i))
             drawForeground(p)
@@ -119,9 +86,8 @@ object ColorAreaView {
     }
 
     def drawBackground(p: Props) {
+      import CanvasHelpers._
       val canvas = document.getElementById("color-area-canvas-bg").asInstanceOf[html.Canvas]
-      val width = canvas.width.toDouble
-      val height = canvas.height.toDouble
 
       val ctx = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
       val imageData = ctx.createImageData(canvas.width, canvas.height)
@@ -129,8 +95,8 @@ object ColorAreaView {
       val data = imageData.data.asInstanceOf[js.Array[Int]]
       val start = System.currentTimeMillis
       for (x <- 0 until canvas.width; y <- 0 until canvas.height) {
-        val a = (p.chroma / 100.0) * (x - width / 2)
-        val b = (p.chroma / 100.0) * (y - height / 2)
+        val a = (x - width / 2) / p.zoom
+        val b = (y - height / 2) / p.zoom
         val i = (y * canvas.width + x) * 4
         val color = ColorConversion.labToRGB(p.luminance, a.toInt, b.toInt)
         data(i + 0) = color(0).toInt.max(0).min(255)
@@ -144,9 +110,8 @@ object ColorAreaView {
     }
 
     def drawForeground(p: Props) {
+      import CanvasHelpers._
       val canvas = document.getElementById("color-area-canvas-fg").asInstanceOf[html.Canvas]
-      val width = canvas.width.toDouble
-      val height = canvas.height.toDouble
 
       val ctx = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
 
@@ -154,21 +119,31 @@ object ColorAreaView {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
       ctx.translate(width / 2, height / 2)
+
+      def paletteCircle(ctx: CanvasRenderingContext2D, color: LAB, zoom: Double = p.zoom) {
+        percentCirle(ctx, color.a, color.b,
+          r = colorRadius / zoom,
+          width = colorBorder / zoom,
+          a = color.luminance / 100.0,
+          refa = Some(p.luminance / 100.0),
+          fillColor = Some(color.toCSS))
+      }
+
+      // circle on p.chroma:
+      percentCirle(ctx, 0, 0, chromaCircleRadius, width = chromaCircleBorder, p.luminance / 100.0)
+
+      val colors = draggingPalette match {
+        case Some((col, i)) => p.palette.updated(i, col)
+        case None => p.palette
+      }
       if (p.chroma > 0) {
-        ctx.scale(100.0 / p.chroma, 100.0 / p.chroma)
-
-        percentCirle(ctx, 0, 0, r = p.chroma, width = 2.0 * p.chroma / 100.0, p.luminance / 100.0)
-
-        for ((color, index) <- p.palette.zipWithIndex if !draggingPalette.isDefined || index != draggingPalette.get._2) {
-          percentCirle(ctx, color.a, color.b, r = p.chroma / colorRadius, width = colorBorder * p.chroma / 100.0, color.l / 100.0, refa = Some(p.luminance / 100.0), fillColor = Some(color.toCSS))
+        ctx.scale(p.zoom, p.zoom)
+        for (color <- colors) {
+          paletteCircle(ctx, color)
         }
-        for ((color, index) <- draggingPalette) {
-          percentCirle(ctx, color.a, color.b, r = p.chroma / colorRadius, width = colorBorder * p.chroma / 100.0, color.l / 100.0, refa = Some(p.luminance / 100.0), fillColor = Some(color.toCSS))
-        }
-      } else { // chroma is zero => infinite zoom
-        percentCirle(ctx, 0, 0, r = 100.0, width = 2.0, p.luminance / 100.0)
-        for (color <- p.palette if color.a == 0.0 && color.b == 0.0) {
-          percentCirle(ctx, 0, 0, r = colorRadius, width = colorBorder, color.l / 100.0, refa = Some(p.luminance / 100.0), fillColor = Some(color.toCSS))
+      } else { // chroma is zero => infinite zoom, only draw gray colors
+        for (color <- colors if color.isGray) {
+          paletteCircle(ctx, color, zoom = 1.0)
         }
       }
     }
@@ -181,28 +156,28 @@ object ColorAreaView {
       p.proxy.dispatch(UpdateChroma(Try(e.target.value.toDouble).getOrElse(0.0)))
     }
 
-    val width = "width".reactAttr
-    val height = "height".reactAttr
+    val widthAttr = "width".reactAttr
+    val heightAttr = "height".reactAttr
     def render(p: Props) = {
       <.div(
+        <.input(^.`type` := "range", ^.value := p.chroma, ^.min := 0, ^.max := 128, ^.step := 1, ^.onChange ==> setChroma(p)),
+        <.input(^.value := p.chroma, ^.onChange ==> setChroma(p), ^.size := 3),
+        <.br,
         <.input(^.`type` := "range", ^.value := p.luminance, ^.min := 0, ^.max := 100, ^.step := 1, ^.onChange ==> setLuminance(p)),
         <.input(^.value := p.luminance, ^.onChange ==> setLuminance(p), ^.size := 3),
-        <.br,
-        <.input(^.`type` := "range", ^.value := p.chroma, ^.min := 0, ^.max := 128, ^.step := 1, ^.onChange ==> setChroma(p)), //TODO: change zoom
-        <.input(^.value := p.chroma, ^.onChange ==> setChroma(p), ^.size := 3),
         <.br,
         <.div(
           ^.position := "relative",
           <.canvas(
             ^.id := "color-area-canvas-bg",
-            width := 256,
-            height := 256,
+            widthAttr := width,
+            heightAttr := height,
             ^.position := "absolute"
           ),
           <.canvas(
             ^.id := "color-area-canvas-fg",
-            width := 256,
-            height := 256,
+            widthAttr := width,
+            heightAttr := height,
             ^.position := "absolute",
             ^.cursor := "default"
           )

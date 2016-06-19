@@ -4,6 +4,11 @@ import scala.scalajs.js
 import js.annotation._
 
 final case class LAB(l: Double, a: Double, b: Double) {
+  def luminance = l
+  def chroma = Math.sqrt(a * a + b * b)
+  def hue = Math.atan2(b, a)
+  def isGray = a == 0 && b == 0
+
   def toRGB: RGB = {
     val rgb = ColorConversion.labToRGB(l, a, b)
     RGB(rgb(0), rgb(1), rgb(2))
