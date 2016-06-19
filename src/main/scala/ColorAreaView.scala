@@ -26,6 +26,15 @@ object ColorAreaView {
     def chroma = proxy.value.colorArea.chroma
     def palette = proxy.value.palette
     def zoom = chromaCircleRadius / chroma
+
+    def insideColor(index: Int, x: Double, y: Double): Boolean = {
+      val c = palette(index)
+      val cx = c.a * zoom + width / 2
+      val cy = c.b * zoom + height / 2
+      // val mx = e.clientX - e.srcElement.getBoundingClientRect.left
+      // val my = e.clientY - e.srcElement.getBoundingClientRect.top
+      (x - cx) * (x - cx) + (y - cy) * (y - cy) <= (colorRadius + colorBorder / 2.0) * (colorRadius + colorBorder / 2.0)
+    }
   }
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -36,21 +45,30 @@ object ColorAreaView {
     def initCanvas(p: Props) = Callback {
       val canvas = document.getElementById("color-area-canvas-fg").asInstanceOf[html.Canvas]
 
+      canvas.onmousewheel = (e: WheelEvent) => {
+        val mx = e.clientX - e.srcElement.getBoundingClientRect.left
+        val my = e.clientY - e.srcElement.getBoundingClientRect.top
+
+        (0 until p.palette.size).reverse.find(i => p.insideColor(i, mx, my)) match {
+          case Some(i) =>
+            val col = p.palette(i)
+            p.proxy.dispatch(UpdateColor(i, col.copy(l = (col.l - e.deltaY / 10.0).max(0).min(100)))).runNow()
+          case None =>
+            p.proxy.dispatch(UpdateChroma((p.chroma + e.deltaY / 10.0).max(0).min(128))).runNow()
+        }
+        console.log(e)
+        e.stopImmediatePropagation()
+        false
+      }
+
       //TODO: native drag event
       canvas.onmousedown = (e: MouseEvent) => {
-        def inside(index: Int): Boolean = {
-          val c = p.palette(index)
-          val cx = c.a * p.zoom + width / 2
-          val cy = c.b * p.zoom + height / 2
-          val mx = e.clientX - e.srcElement.getBoundingClientRect.left
-          val my = e.clientY - e.srcElement.getBoundingClientRect.top
-          (mx - cx) * (mx - cx) + (my - cy) * (my - cy) <= (colorRadius + colorBorder / 2.0) * (colorRadius + colorBorder / 2.0)
-        }
-        (0 until p.palette.size).reverse.find(inside).foreach { i =>
+        val mx = e.clientX - e.srcElement.getBoundingClientRect.left
+        val my = e.clientY - e.srcElement.getBoundingClientRect.top
+
+        (0 until p.palette.size).reverse.find(i => p.insideColor(i, mx, my)).foreach { i =>
           val col = p.palette(i)
           draggingPalette = Some((col, i))
-          val mx = e.clientX - e.srcElement.getBoundingClientRect.left
-          val my = e.clientY - e.srcElement.getBoundingClientRect.top
           dragOffsetX = (p.zoom) * col.a - mx
           dragOffsetY = (p.zoom) * col.b - my
         }
@@ -58,7 +76,6 @@ object ColorAreaView {
       }
 
       canvas.onmousemove = (e: MouseEvent) => {
-        println("drag")
         draggingPalette match {
           case Some((col, i)) =>
             val mx = e.clientX - e.srcElement.getBoundingClientRect().left
@@ -68,6 +85,7 @@ object ColorAreaView {
               b = (my + dragOffsetY) / p.zoom
             )
             draggingPalette = Some((newCol, i))
+            p.proxy.dispatch(UpdateColor(i, col)).runNow()
             drawForeground(p)
 
           case None =>
@@ -76,12 +94,10 @@ object ColorAreaView {
       }
 
       canvas.onmouseup = (e: MouseEvent) => {
-        println("dragend")
         draggingPalette match {
           case Some((col, i)) =>
             draggingPalette = None
             p.proxy.dispatch(UpdateColor(i, col)).runNow()
-            println(col)
           case None =>
         }
         e.stopImmediatePropagation()
@@ -173,6 +189,8 @@ object ColorAreaView {
         <.input(^.value := p.luminance, ^.onChange ==> setLuminance(p), ^.size := 3),
         <.br,
         <.div(
+          ^.width := width,
+          ^.height := height,
           ^.position := "relative",
           <.canvas(
             ^.id := "color-area-canvas-bg",
