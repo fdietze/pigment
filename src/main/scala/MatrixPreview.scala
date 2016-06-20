@@ -1,4 +1,4 @@
-package rainbow
+package pigment
 
 import scala.scalajs.js
 import js.annotation._

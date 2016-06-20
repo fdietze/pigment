@@ -1,4 +1,4 @@
-package rainbow
+package pigment
 
 import diode._
 import diode.react._

@@ -2,7 +2,7 @@ import com.lihaoyi.workbench.Plugin._
 
 enablePlugins(ScalaJSPlugin)
 
-name := "rainbow"
+name := "pigment"
 
 scalaVersion := "2.11.8" // or any other Scala version >= 2.10.2
 
@@ -41,7 +41,7 @@ jsDependencies ++= Seq(
 // workbench
 workbenchSettings
 
-bootSnippet := "rainbow.Main().main();"
+bootSnippet := "pigment.Main().main();"
 
 updateBrowsers <<= updateBrowsers.triggeredBy(fastOptJS in Compile)
 
