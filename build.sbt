@@ -14,8 +14,7 @@ libraryDependencies ++= (
   Nil
 )
 
-// execute js with node
-scalaJSUseRhino in Global := false
+persistLauncher := true
 
 // React JS itself (Note the filenames, adjust as needed, eg. to remove addons.)
 jsDependencies ++= Seq(

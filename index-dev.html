@@ -2,20 +2,16 @@
 <html>
 
 <head>
+    <title>Pigment</title>
     <meta charset="UTF-8">
     <script type="text/javascript" src="/workbench.js"></script>
-    <script type="text/javascript" src="./target/scala-2.11/pigment-jsdeps.js"></script>
-    <title>Pigment</title>
 </head>
 
 <body>
     <div id="container"></div>
-    <!-- Include Scala.js compiled code -->
+    <script type="text/javascript" src="./target/scala-2.11/pigment-jsdeps.js"></script>
     <script type="text/javascript" src="./target/scala-2.11/pigment-fastopt.js"></script>
-    <!-- Run tutorial.webapp.TutorialApp -->
-    <script type="text/javascript">
-        pigment.Main().main()
-    </script>
+    <script type="text/javascript" src="./target/scala-2.11/pigment-launcher.js"></script>
 </body>
 
 </html>
