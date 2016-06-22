@@ -28,12 +28,12 @@ object ColorAreaView {
   case class State(
     chroma: Double = 100,
     luminance: Double = 70,
-    var draggingLuminance: Boolean = false,
-    var draggingPalette: Option[(LAB, Int)] = None,
-    var dragStartX: Double = 0,
-    var dragStartY: Double = 0,
-    var dragOffsetX: Double = 0,
-    var dragOffsetY: Double = 0
+    val draggingLuminance: Boolean = false,
+    val draggingPalette: Option[(LAB, Int)] = None,
+    val dragStartX: Double = 0,
+    val dragStartY: Double = 0,
+    val dragOffsetX: Double = 0,
+    val dragOffsetY: Double = 0
   ) {
     def zoom = chromaCircleRadius / chroma
   }
@@ -56,95 +56,10 @@ object ColorAreaView {
     lazy val bgCanvas = bgCanvasRef($).get
     lazy val fgCanvas = fgCanvasRef($).get
 
-    def initCanvas(p: Props, s: State) = Callback {
-      import p._
-      import s._
+    def draw(p: Props, s: State) = drawBackground(s) >> drawForeground(p, s)
 
-      fgCanvas.onmousewheel = (e: WheelEvent) => {
-        val mx = e.clientX - e.srcElement.getBoundingClientRect.left
-        val my = e.clientY - e.srcElement.getBoundingClientRect.top
-
-        (0 until palette.size).reverse.find(i => insideColor(p, s, i, mx, my)) match {
-          case Some(i) =>
-            val col = palette(i)
-            proxy.dispatch(UpdateColor(i, col.copy(l = (col.l - e.deltaY / 10.0).max(0).min(100)))).runNow()
-          case None =>
-            $.modState(_.copy(chroma = (chroma + e.deltaY / 10.0).max(0).min(128))).runNow()
-        }
-        e.stopImmediatePropagation()
-        false
-      }
-
-      //TODO: native drag event
-      fgCanvas.onmousedown = (e: MouseEvent) => {
-        val mx = e.clientX - e.srcElement.getBoundingClientRect.left
-        val my = e.clientY - e.srcElement.getBoundingClientRect.top
-
-        (0 until palette.size).reverse.find(i => insideColor(p, s, i, mx, my)) match {
-          case Some(i) =>
-            val col = palette(i)
-            dragStartX = mx
-            dragStartY = my
-            dragOffsetX = (zoom) * col.a - mx
-            dragOffsetY = (zoom) * col.b - my
-            draggingPalette = Some((col, i))
-          case None =>
-            draggingLuminance = true
-        }
-        e.stopImmediatePropagation()
-      }
-
-      fgCanvas.onmousemove = (e: MouseEvent) => {
-        val mx = e.clientX - e.srcElement.getBoundingClientRect().left
-        val my = e.clientY - e.srcElement.getBoundingClientRect().top
-
-        draggingPalette match {
-          case Some((col, i)) =>
-            val newCol = col.copy(
-              a = (mx + dragOffsetX) / zoom,
-              b = (my + dragOffsetY) / zoom
-            )
-            draggingPalette = Some((newCol, i))
-            proxy.dispatch(UpdateColor(i, col)).runNow()
-            drawForeground(p, s)
-
-          case None if draggingLuminance =>
-            val luminance = ((Math.PI * 2.5 + Math.atan2(my - height / 2.0, mx - width / 2.0)) / (Math.PI * 2) * 100.0) % 100.0
-            $.modState(_.copy(luminance = luminance)).runNow()
-
-          case _ =>
-        }
-        e.stopImmediatePropagation()
-      }
-
-      fgCanvas.onmouseup = (e: MouseEvent) => {
-        val mx = e.clientX - e.srcElement.getBoundingClientRect().left
-        val my = e.clientY - e.srcElement.getBoundingClientRect().top
-
-        draggingPalette match {
-          case Some((col, i)) =>
-            if (dragStartX == mx && dragStartY == my) {
-              $.modState(_.copy(luminance = col.luminance, chroma = col.chroma)).runNow()
-            } else
-              proxy.dispatch(UpdateColor(i, col)).runNow()
-
-          case None if draggingLuminance =>
-            val luminance = ((Math.PI * 2.5 + Math.atan2(my - height / 2.0, mx - width / 2.0)) / (Math.PI * 2) * 100.0) % 100.0
-            $.modState(_.copy(luminance = luminance)).runNow()
-
-          case _ =>
-        }
-        draggingPalette = None
-        draggingLuminance = false
-        e.stopImmediatePropagation()
-      }
-
-      drawBackground(p, s)
-      drawForeground(p, s)
-    }
-
-    def drawBackground(p: Props, s: State) {
-      import p._
+    def drawBackground(s: State) = Callback {
+      println("drawbg")
       import s._
       import CanvasHelpers._
 
@@ -168,7 +83,8 @@ object ColorAreaView {
       ctx.putImageData(imageData, 0, 0)
     }
 
-    def drawForeground(p: Props, s: State) {
+    def drawForeground(p: Props, s: State) = Callback {
+      println("drawfg")
       import p._
       import s._
       import CanvasHelpers._
@@ -208,6 +124,107 @@ object ColorAreaView {
       }
     }
 
+    //TODO: native drag event
+    def handleMouseDown(p: Props)(e: ReactMouseEvent) = $.state.flatMap { s =>
+      import p._
+      import s._
+
+      val mx = e.clientX - e.nativeEvent.srcElement.getBoundingClientRect.left
+      val my = e.clientY - e.nativeEvent.srcElement.getBoundingClientRect.top
+
+      (0 until palette.size).reverse.find(i => insideColor(p, s, i, mx, my)) match {
+        case Some(i) =>
+          val col = palette(i)
+          $.modState(_.copy(
+            dragStartX = mx,
+            dragStartY = my,
+            dragOffsetX = (zoom) * col.a - mx,
+            dragOffsetY = (zoom) * col.b - my,
+            draggingPalette = Some((col, i))
+          ))
+        case None =>
+          $.modState(_.copy(draggingLuminance = true))
+      }
+    }
+
+    def handleMouseMove(p: Props)(e: ReactMouseEvent) = $.state.flatMap { s =>
+      //TODO: moving color when zoomlevel = 0
+      import p._
+      import s._
+      val mx = e.clientX - e.nativeEvent.srcElement.getBoundingClientRect.left
+      val my = e.clientY - e.nativeEvent.srcElement.getBoundingClientRect.top
+
+      e.stopPropagation()
+
+      draggingPalette match {
+        case Some((col, i)) =>
+          val newCol = col.copy(
+            a = (mx + dragOffsetX) / zoom,
+            b = (my + dragOffsetY) / zoom
+          )
+          val newState = s.copy(draggingPalette = Some((newCol, i)))
+          $.setState(newState) >>
+            proxy.dispatch(UpdateColor(i, col)) >>
+            drawForeground(p, s)
+
+        case None if draggingLuminance =>
+          val luminance = ((Math.PI * 2.5 + Math.atan2(my - height / 2.0, mx - width / 2.0)) / (Math.PI * 2) * 100.0) % 100.0
+          val newState = s.copy(luminance = luminance)
+          $.setState(newState) >> draw(p, newState)
+
+        case _ =>
+          Callback.empty
+      }
+    }
+
+    def handleMouseUp(p: Props)(e: ReactMouseEvent) = $.state.flatMap { s =>
+      import p._
+      import s._
+      val mx = e.clientX - e.nativeEvent.srcElement.getBoundingClientRect.left
+      val my = e.clientY - e.nativeEvent.srcElement.getBoundingClientRect.top
+
+      (draggingPalette match {
+        case Some((col, i)) =>
+          if (dragStartX == mx && dragStartY == my) {
+            val newState = s.copy(luminance = col.luminance, chroma = col.chroma)
+            println("boom")
+            $.setState(newState) >> drawBackground(newState) //TODO: drawForeground is not triggered / triggered with old state
+          } else
+            proxy.dispatch(UpdateColor(i, col))
+
+        case None if draggingLuminance =>
+          val luminance = ((Math.PI * 2.5 + Math.atan2(my - height / 2.0, mx - width / 2.0)) / (Math.PI * 2) * 100.0) % 100.0
+          val newState = s.copy(luminance = luminance)
+          $.setState(newState) >> drawBackground(newState)
+
+        case _ =>
+          Callback.empty
+      }) >> $.modState(_.copy(
+        draggingPalette = None,
+        draggingLuminance = false
+      ))
+    }
+
+    def handleMouseWheel(p: Props)(e: ReactWheelEvent) = $.state.flatMap { s =>
+      import p._
+      import s._
+
+      val mx = e.clientX - e.nativeEvent.srcElement.getBoundingClientRect.left
+      val my = e.clientY - e.nativeEvent.srcElement.getBoundingClientRect.top
+      val deltaY = e.deltaY
+
+      e.stopPropagation()
+
+      (0 until palette.size).reverse.find(i => insideColor(p, s, i, mx, my)) match {
+        case Some(i) =>
+          val col = palette(i)
+          proxy.dispatch(UpdateColor(i, col.copy(l = (col.l - deltaY / 10.0).max(0).min(100))))
+        case None =>
+          val newState = s.copy(chroma = (chroma + deltaY / 10.0).max(0).min(128))
+          $.setState(newState) >> drawBackground(newState)
+      }
+    }
+
     val widthAttr = "width".reactAttr
     val heightAttr = "height".reactAttr
     def render(p: Props) = {
@@ -227,14 +244,13 @@ object ColorAreaView {
             widthAttr := width,
             heightAttr := height,
             ^.position := "absolute",
-            ^.cursor := "default"
+            ^.cursor := "default",
+            ^.onWheel ==> handleMouseWheel(p),
+            ^.onMouseDown ==> handleMouseDown(p),
+            ^.onMouseMove ==> handleMouseMove(p),
+            ^.onMouseUp ==> handleMouseUp(p)
           )
         )
-      // <.br,
-      // <.input(^.`type` := "range", ^.value := chroma, ^.min := 0, ^.max := 128, ^.step := 1, ^.onChange ==> setChroma(p)),
-      // <.input(^.value := chroma, ^.onChange ==> setChroma(p), ^.size := 3),
-      // <.br,
-      // <.input(^.`type` := "range", ^.width := width, ^.value := luminance, ^.min := 0, ^.max := 100, ^.step := 1, ^.onChange ==> setLuminance(p))
       )
     }
   }
@@ -242,8 +258,9 @@ object ColorAreaView {
   private val component = ReactComponentB[Props]("ColorAreaView")
     .initialState(State())
     .renderBackend[Backend]
-    .componentDidMount(c => c.backend.initCanvas(c.props, c.state))
-    .componentDidUpdate(c => c.$.backend.initCanvas(c.currentProps, c.currentState))
+    .componentDidMount(c => c.backend.draw(c.props, c.state))
+    .componentDidUpdate(c => c.$.backend.draw(c.currentProps, c.currentState))
+    .shouldComponentUpdate(c => { c.$.backend.drawForeground(c.currentProps, c.currentState).runNow(); false })
     .build
 
   def apply(proxy: ModelProxy[RootModel]) = component(Props(proxy))
