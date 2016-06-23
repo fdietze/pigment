@@ -6,8 +6,12 @@ import js.annotation._
 final case class LAB(l: Double, a: Double, b: Double) {
   def luminance = l
   def chroma = Math.sqrt(a * a + b * b)
-  def hue = Math.atan2(b, a)
+  def hue = ((Math.PI * 2) + Math.atan2(b, a)) % (Math.PI * 2)
   def isGray = a == 0 && b == 0
+
+  def withChroma(c: Double) = {
+    copy(a = a / chroma * c, b = b / chroma * c)
+  }
 
   def toRGB: RGB = {
     val rgb = ColorConversion.labToRGB(l, a, b)
@@ -15,6 +19,7 @@ final case class LAB(l: Double, a: Double, b: Double) {
   }
   def toCSS = toRGB.toCSS
 }
+
 final case class RGB(r: Int, g: Int, b: Int) {
   def toCSS = s"rgb($r, $g, $b)"
 }

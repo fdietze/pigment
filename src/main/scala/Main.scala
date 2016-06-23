@@ -20,7 +20,8 @@ object Main extends js.JSApp {
       <.div(
         ^.display := "flex",
         ^.flex := "1 1 auto",
-        ColorAreaView(m),
+        ChromaView(m),
+        LuminanceView(m),
         MatrixPreview(m)
       )
     }
