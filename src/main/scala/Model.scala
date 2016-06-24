@@ -3,8 +3,20 @@ package pigment
 import diode._
 import diode.react._
 
+import scalax.collection.Graph
+import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge._
+
 // Model
-case class RootModel(palette: IndexedSeq[LAB] = IndexedSeq.empty)
+case class RootModel(palette: IndexedSeq[LAB] = IndexedSeq.empty) {
+  def vertices = palette.map(Vertex(_))
+  def edges = vertices.combinations(2).map { case IndexedSeq(source, target) => DiEdge(source, target) }.toSeq
+  // ColorDistance.ciede2000(source.color, target.color)
+  def graph = Graph.from[Vertex, DiEdge](vertices, edges)
+}
+
+case class Vertex(color: LAB)
+// case class Edge[V](source: V, target: V, distance: Double) extends DiEdgeLikeIn[V]
 
 // Actions
 case class AddColor(color: LAB) extends Action

@@ -181,7 +181,6 @@ object ColorDistance {
 
   def tests() {
     def ciede2000_case(l1: Double, a1: Double, b1: Double, l2: Double, a2: Double, b2: Double, de: Double) {
-      println(round(ciede2000(l1, a1, b1, l2, a2, b2) * 10000.0) / 10000.0, de)
       assert(round(ciede2000(l1, a1, b1, l2, a2, b2) * 10000.0) / 10000.0 == de)
     }
 

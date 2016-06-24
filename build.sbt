@@ -11,6 +11,8 @@ libraryDependencies ++= (
   "com.github.japgolly.scalajs-react" %%% "core" % "0.11.1" ::
   "me.chrons" %%% "diode" % "1.0.0" ::
   "me.chrons" %%% "diode-react" % "1.0.0" ::
+  "org.singlespaced" %%% "scalajs-d3" % "0.3.3" ::
+  "com.assembla.scala-incubator" %%% "graph-core" % "1.11.0" ::
   Nil
 )
 
@@ -56,3 +58,18 @@ autoCompilerPlugins := true
 resolvers += Resolver.sonatypeRepo("snapshots")
 
 addCompilerPlugin("com.nativelibs4java" %% "scalaxy-streams" % "0.3.4")
+
+scalacOptions ++=
+  "-encoding" :: "UTF-8" ::
+  "-unchecked" ::
+  "-deprecation" ::
+  "-explaintypes" ::
+  "-feature" ::
+  "-language:_" ::
+  "-Xlint:_" ::
+  "-Ywarn-unused" ::
+  // "-Xdisable-assertions" ::
+  // "-optimize" ::
+  // "-Yopt:_" :: // enables all 2.12 optimizations
+  // "-Yinline" :: "-Yinline-warnings" ::
+  Nil

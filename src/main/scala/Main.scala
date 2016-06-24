@@ -24,6 +24,7 @@ object Main extends js.JSApp {
         ChromaView(m),
         LuminanceView(m),
         DistanceListView(m),
+        DistanceGraphView(m),
         MatrixPreview(m)
       )
     }
