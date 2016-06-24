@@ -11,6 +11,7 @@ import diode.react._
 
 object Main extends js.JSApp {
   def main {
+    // ColorDistance.tests()
     val mainView = AppCircuit.connect(m => m)(m => MainView(m))
     ReactDOM.render(mainView, document.getElementById("container"))
   }
@@ -22,6 +23,7 @@ object Main extends js.JSApp {
         ^.flex := "1 1 auto",
         ChromaView(m),
         LuminanceView(m),
+        DistanceListView(m),
         MatrixPreview(m)
       )
     }
