@@ -9,8 +9,8 @@ scalaVersion := "2.11.8" // or any other Scala version >= 2.10.2
 // core = essentials only. No bells or whistles.
 libraryDependencies ++= (
   "com.github.japgolly.scalajs-react" %%% "core" % "0.11.1" ::
-  "me.chrons" %%% "diode" % "0.5.2" ::
-  "me.chrons" %%% "diode-react" % "0.5.2" ::
+  "me.chrons" %%% "diode" % "1.0.0" ::
+  "me.chrons" %%% "diode-react" % "1.0.0" ::
   Nil
 )
 

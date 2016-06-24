@@ -7,8 +7,8 @@ import diode.react._
 case class RootModel(palette: IndexedSeq[LAB] = IndexedSeq.empty)
 
 // Actions
-case class AddColor(color: LAB)
-case class UpdateColor(index: Int, color: LAB)
+case class AddColor(color: LAB) extends Action
+case class UpdateColor(index: Int, color: LAB) extends Action
 
 // Circuit
 object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {

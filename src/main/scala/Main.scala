@@ -12,8 +12,8 @@ import diode.react._
 object Main extends js.JSApp {
   def main {
     // ColorDistance.tests()
-    val mainView = AppCircuit.connect(m => m)(m => MainView(m))
-    ReactDOM.render(mainView, document.getElementById("container"))
+    val mainView = AppCircuit.connect(m => m)
+    ReactDOM.render(mainView(m => MainView(m)), document.getElementById("container"))
   }
 
   val MainView = ReactComponentB[ModelProxy[RootModel]]("MainView")
