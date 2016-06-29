@@ -136,21 +136,36 @@ trait GraphView[V, E[X] <: DiEdgeLikeIn[X]] {
       .style("fill", "steelblue")
   }
 
+  val reuseVertexCoordinatesOnUpdate = false
+
   class Backend($: BackendScope[Props, State]) {
 
     def updateData(p: Props, s: State) = Callback {
+      // println("update")
       import p._
       import s._
 
+      val newVertices = p.graph.nodes.map((v: Graph[V, E]#NodeT) => v.value)
+      var removedD3Vertices: List[D3Vertex] = if (reuseVertexCoordinatesOnUpdate) vertexData.filterNot(d => newVertices contains d.v).toList else Nil
       val oldVertices = vertexData.map(d => d.v -> d).toMap
-      val newVertices = p.graph.nodes.map((v: Graph[V, E]#NodeT) => v.value).map { v =>
+      val newD3Vertices = newVertices.map { v =>
         oldVertices.get(v) match {
           case Some(d3v) => d3v
-          case None => new D3Vertex(v)
+          case None =>
+            // println(s" new v instance: $v")
+            val newD3V = new D3Vertex(v)
+            removedD3Vertices.headOption.foreach { removed =>
+              newD3V.x = removed.x
+              newD3V.y = removed.y
+              newD3V.px = removed.px
+              newD3V.py = removed.py
+              removedD3Vertices = removedD3Vertices.tail
+            }
+            newD3V
         }
       }.toJSArray
 
-      val vertexMap = newVertices.map(d => d.v -> d).toMap
+      val vertexMap = newD3Vertices.map(d => d.v -> d).toMap
       val oldEdges = edgeData.map(d => (d.e -> d)).toMap
       val newEdges = p.graph.edges.map { e_inner: Graph[V, E]#EdgeT =>
         val e = e_inner.toOuter
@@ -158,11 +173,12 @@ trait GraphView[V, E[X] <: DiEdgeLikeIn[X]] {
           case Some(d3e) =>
             d3e
           case None =>
+            // println(s" new e instance: $e")
             new D3Edge(e, vertexMap(e.source), vertexMap(e.target))
         }
       }.toJSArray
 
-      vertexData = newVertices
+      vertexData = newD3Vertices
       edgeData = newEdges
     }
 

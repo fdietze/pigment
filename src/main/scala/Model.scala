@@ -9,13 +9,13 @@ import scalax.collection.GraphEdge._
 
 // Model
 case class RootModel(palette: IndexedSeq[LAB] = IndexedSeq.empty) {
-  def vertices = palette.map(Vertex(_))
-  def edges = vertices.combinations(2).map { case IndexedSeq(source, target) => DiEdge(source, target) }.toSeq
+  lazy val vertices = palette
+  lazy val edges = vertices.combinations(2).map { case IndexedSeq(source, target) => DiEdge(source, target) }.toSeq
   // ColorDistance.ciede2000(source.color, target.color)
-  def graph = Graph.from[Vertex, DiEdge](vertices, edges)
+  lazy val graph = Graph.from[LAB, DiEdge](vertices, edges)
 }
 
-case class Vertex(color: LAB)
+// case class Vertex(color: LAB)
 // case class Edge[V](source: V, target: V, distance: Double) extends DiEdgeLikeIn[V]
 
 // Actions
