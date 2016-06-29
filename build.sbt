@@ -2,6 +2,9 @@ import com.lihaoyi.workbench.Plugin._
 
 enablePlugins(ScalaJSPlugin)
 
+// workaround for https://github.com/scala-js/scala-js/issues/2491
+scalaJSOptimizerOptions in (Compile, fullOptJS) ~= { _.withUseClosureCompiler(false) }
+
 name := "pigment"
 
 scalaVersion := "2.11.8" // or any other Scala version >= 2.10.2
