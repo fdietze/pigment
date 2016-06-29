@@ -1,1 +1,12 @@
-https://ipfs.io/ipns/QmNt7M2BXkyQbeuX9fuaJw2E5m5YNRmTfjmJLnTLedmq8m/pigment.html
+# Reproduction
+
+```sh
+sbt fullOptJS
+```
+open `pigment.html` in browser.
+
+Will print in console:
+```
+before TypeError
+Uncaught TypeError: this.y is not a function
+```
