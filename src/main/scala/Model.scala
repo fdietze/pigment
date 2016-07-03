@@ -11,7 +11,6 @@ import scalax.collection.GraphEdge._
 case class RootModel(palette: IndexedSeq[Color] = IndexedSeq.empty) {
   lazy val vertices = palette
   lazy val edges = vertices.combinations(2).map { case IndexedSeq(source, target) => DiEdge(source, target) }.toSeq
-  // ColorDistance.ciede2000(source.color, target.color)
   lazy val graph = Graph.from[Color, DiEdge](vertices, edges)
 }
 
@@ -22,6 +21,7 @@ case class Color(lab: LAB) {
   def luminance = lab.luminance
   def chroma = lab.chroma
   def hue = lab.hue
+  def hueHint = lab.hueHint
   def toCSS = lab.toCSS
   def isGray = lab.isGray
   def withChroma(c: Double) = copy(lab = lab.withChroma(c))

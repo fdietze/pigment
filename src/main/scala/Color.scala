@@ -4,14 +4,17 @@ import scala.scalajs.js
 import js.annotation._
 import Math._
 
-final case class LAB(l: Double, a: Double, b: Double) {
+final case class LAB(l: Double, a: Double, b: Double, hueHint: Double = PI) {
   def luminance = l
   def chroma = sqrt(a * a + b * b)
   def hue = ((PI * 2) + atan2(b, a)) % (PI * 2)
   def isGray = a == 0 && b == 0
 
   def withChroma(c: Double) = {
-    copy(a = a / chroma * c, b = b / chroma * c)
+    if (isGray)
+      copy(a = cos(hueHint) * c, b = sin(hueHint) * c)
+    else
+      copy(a = a / chroma * c, b = b / chroma * c, hueHint = hue)
   }
 
   def toRGB: RGB = {

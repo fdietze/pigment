@@ -33,14 +33,14 @@ object LuminanceView {
   ) {
   }
 
-  def colorX(color: Color) = color.hue / (Math.PI * 2) * width
+  def colorX(color: Color) = (if (color.isGray) color.hueHint else color.hue) / (Math.PI * 2) * width
   def colorY(color: Color) = ((100 - color.l) / 100) * height
   def color(x: Double, y: Double, chroma: Double) = {
     val hue = (x / width) * (Math.PI * 2)
     val a = Math.cos(hue) * chroma
     val b = Math.sin(hue) * chroma
     val l = 100 - (y / height * 100)
-    LAB(l, a, b)
+    LAB(l, a, b, hueHint = hue)
   }
 
   def insideColor(p: Props, s: State, index: Int, x: Double, y: Double): Boolean = {
