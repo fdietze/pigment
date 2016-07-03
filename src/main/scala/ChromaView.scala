@@ -29,7 +29,7 @@ object ChromaView {
     chroma: Double = 100,
     luminance: Double = 70,
     val draggingLuminance: Boolean = false,
-    val draggingPalette: Option[(LAB, Int)] = None,
+    val draggingPalette: Option[(Color, Int)] = None,
     val dragStartX: Double = 0,
     val dragStartY: Double = 0,
     val dragOffsetX: Double = 0,
@@ -94,7 +94,7 @@ object ChromaView {
 
       ctx.translate(width / 2, height / 2)
 
-      def paletteCircle(ctx: CanvasRenderingContext2D, color: LAB, zoom: Double = zoom) {
+      def paletteCircle(ctx: CanvasRenderingContext2D, color: Color, zoom: Double = zoom) {
         percentCirle(ctx, color.a, color.b,
           r = colorRadius / zoom,
           width = colorBorder / zoom,
@@ -156,10 +156,10 @@ object ChromaView {
 
       draggingPalette match {
         case Some((col, i)) =>
-          val newCol = col.copy(
+          val newCol = col.copy(lab = col.lab.copy(
             a = (mx + dragOffsetX) / zoom,
             b = (my + dragOffsetY) / zoom
-          )
+          ))
           val newState = s.copy(draggingPalette = Some((newCol, i)))
           $.setState(newState) >>
             proxy.dispatch(UpdateColor(i, newCol)) >>
@@ -215,7 +215,7 @@ object ChromaView {
       (0 until palette.size).reverse.find(i => insideColor(p, s, i, mx, my)) match {
         case Some(i) =>
           val col = palette(i)
-          val newCol = col.copy(l = (col.l - deltaY / 10.0).max(0).min(100))
+          val newCol = col.copy(lab = col.lab.copy(l = (col.l - deltaY / 10.0).max(0).min(100)))
           val newState = s.copy(luminance = newCol.l)
           proxy.dispatch(UpdateColor(i, newCol)) >> $.setState(newState) >> drawBackground(newState)
         case None =>

@@ -24,10 +24,10 @@ import scalax.collection.Graph
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 
-object DistanceD3GraphView extends graphView.GraphView[LAB, DiEdge] {
+object DistanceD3GraphView extends graphView.GraphView[Color, DiEdge] {
   override val reuseVertexCoordinatesOnUpdate = true
-  override def linkDistance(e: DiEdge[LAB]) = ColorDistance.ciede2000(e.source, e.target) * 2
-  override def linkStrength(e: DiEdge[LAB]) = 3
+  override def linkDistance(e: DiEdge[Color]) = ColorDistance.ciede2000(e.source.lab, e.target.lab) * 2
+  override def linkStrength(e: DiEdge[Color]) = 3
   override def styleVertices(sel: VertexSelection) = {
     super.styleVertices(sel)
       .attr("r", 10.0)

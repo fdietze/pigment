@@ -60,11 +60,11 @@ object DistanceListView {
       <.table(
         <.thead(<.tr(<.th())),
         <.tbody(
-          p.palette.combinations(2).toSeq.sortBy { case IndexedSeq(a, b) => ColorDistance.ciede2000(a, b) }.map {
+          p.palette.combinations(2).toSeq.sortBy { case IndexedSeq(a, b) => ColorDistance.ciede2000(a.lab, b.lab) }.map {
             case IndexedSeq(a, b) =>
               <.tr(
                 <.td(
-                  pair(a, b)
+                  pair(a.lab, b.lab)
                 )
               )
           }

@@ -64,7 +64,7 @@ object MatrixPreview {
             <.tr(
               p.palette map { b =>
                 <.td(
-                  cellPreview(a, b)
+                  cellPreview(a.lab, b.lab)
                 )
               }
             )

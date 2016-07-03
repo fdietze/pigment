@@ -25,7 +25,7 @@ object LuminanceView {
 
   case class State(
     val chroma: Double = 100,
-    val draggingPalette: Option[(LAB, Int)] = None,
+    val draggingPalette: Option[(Color, Int)] = None,
     val dragStartX: Double = 0,
     val dragStartY: Double = 0,
     val dragOffsetX: Double = 0,
@@ -33,8 +33,8 @@ object LuminanceView {
   ) {
   }
 
-  def colorX(color: LAB) = color.hue / (Math.PI * 2) * width
-  def colorY(color: LAB) = ((100 - color.l) / 100) * height
+  def colorX(color: Color) = color.hue / (Math.PI * 2) * width
+  def colorY(color: Color) = ((100 - color.l) / 100) * height
   def color(x: Double, y: Double, chroma: Double) = {
     val hue = (x / width) * (Math.PI * 2)
     val a = Math.cos(hue) * chroma
@@ -99,7 +99,7 @@ object LuminanceView {
       ctx.asInstanceOf[js.Dynamic].resetTransform() //TODO: add to scalajs.dom library
       ctx.clearRect(0, 0, fgCanvas.width, fgCanvas.height)
 
-      def paletteCircle(ctx: CanvasRenderingContext2D, color: LAB) {
+      def paletteCircle(ctx: CanvasRenderingContext2D, color: Color) {
         percentCirle(
           ctx,
           x = colorX(color),
@@ -154,7 +154,7 @@ object LuminanceView {
 
       draggingPalette match {
         case Some((col, i)) =>
-          val newCol = color(mx + dragOffsetX, my + dragOffsetY, col.chroma)
+          val newCol = col.copy(lab = color(mx + dragOffsetX, my + dragOffsetY, col.chroma))
           val newState = s.copy(draggingPalette = Some((newCol, i)))
           $.setState(newState) >>
             proxy.dispatch(UpdateColor(i, newCol)) >>
