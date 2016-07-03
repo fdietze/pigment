@@ -24,33 +24,13 @@ import scalax.collection.Graph
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 
-object DistanceD3GraphView extends graphView.GraphView[Color, DiEdge] {
+object DistanceGraphView extends graphView.GraphView[Color, DiEdge] {
   override val reuseVertexCoordinatesOnUpdate = true
-  override def linkDistance(e: DiEdge[Color]) = ColorDistance.ciede2000(e.source.lab, e.target.lab) * 2
-  override def linkStrength(e: DiEdge[Color]) = 3
+  override def linkDistance(e: DiEdge[Color]) = ColorDistance.ciede2000(e.source.lab, e.target.lab)
+  override def linkStrength(e: DiEdge[Color]) = 1
   override def styleVertices(sel: VertexSelection) = {
     super.styleVertices(sel)
       .attr("r", 10.0)
       .style("fill", (d: D3Vertex) => d.v.toCSS)
   }
-}
-
-object DistanceGraphView {
-
-  case class Props(proxy: ModelProxy[RootModel]) {
-    def palette = proxy.value.palette
-  }
-
-  class Backend($: BackendScope[Props, Unit]) {
-
-    def render(p: Props) = {
-      p.proxy.wrap(_.graph)(DistanceD3GraphView(_, 400, 400))
-    }
-  }
-
-  private val component = ReactComponentB[Props]("DistanceListView")
-    .renderBackend[Backend]
-    .build
-
-  def apply(proxy: ModelProxy[RootModel]) = component(Props(proxy))
 }
