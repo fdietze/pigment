@@ -122,12 +122,12 @@ object LuminanceView {
     }
 
     //TODO: native drag event
-    def handleMouseDown(p: Props)(e: ReactMouseEvent) = $.state.flatMap { s =>
+    def handleMouseDown(p: Props)(e: ReactMouseEventH) = $.state.flatMap { s =>
       import p._
       import s._
 
-      val mx = e.clientX - e.nativeEvent.srcElement.getBoundingClientRect.left
-      val my = e.clientY - e.nativeEvent.srcElement.getBoundingClientRect.top
+      val mx = e.clientX - e.target.getBoundingClientRect.left
+      val my = e.clientY - e.target.getBoundingClientRect.top
 
       (0 until palette.size).reverse.find(i => insideColor(p, s, i, mx, my)) match {
         case Some(i) =>
@@ -146,11 +146,11 @@ object LuminanceView {
       }
     }
 
-    def handleMouseMove(p: Props)(e: ReactMouseEvent) = $.state.flatMap { s =>
+    def handleMouseMove(p: Props)(e: ReactMouseEventH) = $.state.flatMap { s =>
       import p._
       import s._
-      val mx = e.clientX - e.nativeEvent.srcElement.getBoundingClientRect.left
-      val my = e.clientY - e.nativeEvent.srcElement.getBoundingClientRect.top
+      val mx = e.clientX - e.target.getBoundingClientRect.left
+      val my = e.clientY - e.target.getBoundingClientRect.top
 
       draggingPalette match {
         case Some((col, i)) =>
@@ -165,11 +165,9 @@ object LuminanceView {
       }
     }
 
-    def handleMouseUp(p: Props)(e: ReactMouseEvent) = $.state.flatMap { s =>
+    def handleMouseUp(p: Props)(e: ReactMouseEventH) = $.state.flatMap { s =>
       import p._
       import s._
-      val mx = e.clientX - e.nativeEvent.srcElement.getBoundingClientRect.left
-      val my = e.clientY - e.nativeEvent.srcElement.getBoundingClientRect.top
 
       (draggingPalette match {
         case Some((col, i)) =>
@@ -181,12 +179,12 @@ object LuminanceView {
       ))
     }
 
-    def handleMouseWheel(p: Props)(e: ReactWheelEvent) = $.state.flatMap { s =>
+    def handleMouseWheel(p: Props)(e: ReactWheelEventH) = $.state.flatMap { s =>
       import p._
       import s._
 
-      val mx = e.clientX - e.nativeEvent.srcElement.getBoundingClientRect.left
-      val my = e.clientY - e.nativeEvent.srcElement.getBoundingClientRect.top
+      val mx = e.clientX - e.target.getBoundingClientRect.left
+      val my = e.clientY - e.target.getBoundingClientRect.top
       val deltaY = e.deltaY
 
       e.preventDefault()
