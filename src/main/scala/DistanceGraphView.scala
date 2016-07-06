@@ -27,6 +27,7 @@ import scalax.collection.GraphEdge._
 object DistanceGraphView extends graphView.GraphView[Color, DiEdge] {
   override val reuseVertexCoordinatesOnUpdate = true
   override def linkDistance(e: DiEdge[Color]) = ColorDistance.ciede2000(e.source.lab, e.target.lab)
+  override def charge(v: Color) = 0
   override def linkStrength(e: DiEdge[Color]) = 1
   override def styleVertices(sel: VertexSelection) = {
     super.styleVertices(sel)
