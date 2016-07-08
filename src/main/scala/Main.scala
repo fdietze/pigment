@@ -16,6 +16,8 @@ object Main extends js.JSApp {
     ReactDOM.render(mainView(m => MainView(m)), document.getElementById("container"))
   }
 
+  val modelConnect = AppCircuit.connect(m => m)
+
   val MainView = ReactComponentB[ModelProxy[RootModel]]("MainView")
     .render_P { m =>
       <.div(
@@ -24,7 +26,7 @@ object Main extends js.JSApp {
         ChromaView(m),
         LuminanceView(m),
         DistanceListView(m),
-        m.wrap(_.graph)(DistanceGraphView(_, 200, 200)),
+        modelConnect(g => DistanceGraphView(g.value.graph, 200, 200)),
         MatrixPreview(m)
       )
     }

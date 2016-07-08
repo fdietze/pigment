@@ -24,7 +24,9 @@ import scalax.collection.Graph
 import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 
-object DistanceGraphView extends graphView.GraphView[Color, DiEdge] {
+import fdietze.scalajs.react.components.D3ForceLayout
+
+object DistanceGraphView extends D3ForceLayout[Color, DiEdge] {
   override val reuseVertexCoordinatesOnUpdate = true
   override def linkDistance(e: DiEdge[Color]) = ColorDistance.ciede2000(e.source.lab, e.target.lab)
   override def charge(v: Color) = 0
