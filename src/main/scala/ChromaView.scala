@@ -24,33 +24,34 @@ object ChromaView extends ColorCanvasView {
     dragState: DragState = DragState()
   ) {
     def zoom = chromaCircleRadius / chroma
-  }
-
-  def colorX(color: Color, s: State) = (if (color.isGray) 0 else s.zoom * color.a) + width / 2
-  def colorY(color: Color, s: State) = (if (color.isGray) 0 else s.zoom * color.b) + height / 2
-  def colorAt(x: Double, y: Double, s: State): LAB = {
-    val a = (x - width / 2) / s.zoom
-    val b = (y - height / 2) / s.zoom
-    val l = s.luminance
-    def hue = ((PI * 2) + atan2((y - height / 2), (x - width / 2))) % (PI * 2)
-    LAB(l, a, b, hueHint = hue)
+    def withDragState(ds: DragState) = copy(dragState = ds)
   }
 
   type Draggable = (Color, Int)
 
-  override def hitDraggable(x: Double, y: Double, p: Props, s: State): Option[(Color, Int)] = {
-    import p._
-    import s._
-    palette.zipWithIndex.find {
-      case (col, i) =>
-        val cx = colorX(col, s)
-        val cy = colorY(col, s)
-        val r = colorRadius + colorBorder / 2.0
-        (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r
+  class Backend(val $: BackendScope[Props, State]) extends BgFgBackend[State] {
+    def colorX(color: Color, s: State) = (if (color.isGray) 0 else s.zoom * color.a) + width / 2
+    def colorY(color: Color, s: State) = (if (color.isGray) 0 else s.zoom * color.b) + height / 2
+    def colorAt(x: Double, y: Double, s: State): LAB = {
+      val a = (x - width / 2) / s.zoom
+      val b = (y - height / 2) / s.zoom
+      val l = s.luminance
+      def hue = ((PI * 2) + atan2((y - height / 2), (x - width / 2))) % (PI * 2)
+      LAB(l, a, b, hueHint = hue)
     }
-  }
 
-  class Backend(val $: BackendScope[Props, State]) extends BgFgBackend {
+    override def hitDraggable(x: Double, y: Double, p: Props, s: State): Option[(Color, Int)] = {
+      import p._
+      import s._
+      palette.zipWithIndex.find {
+        case (col, i) =>
+          val cx = colorX(col, s)
+          val cy = colorY(col, s)
+          val r = colorRadius + colorBorder / 2.0
+          (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r
+      }
+    }
+
     def drawForeground(p: Props, s: State) = Callback {
       import p._
       import s._
@@ -79,73 +80,34 @@ object ChromaView extends ColorCanvasView {
       }
     }
 
-    //TODO: native drag event
-    def handleMouseDown(p: Props)(e: ReactMouseEventH) = $.state.flatMap { s =>
-      import p._
-      import s._
-
-      val (mx, my) = mouseOffset(e)
-
-      hitDraggable(mx, my, p, s) match {
-        case Some(target @ (col, i)) =>
-          val newState = s.copy(
-            luminance = col.luminance,
-            dragState = DragState(
-              dragging = Some(target),
-              startX = mx,
-              startY = my,
-              offsetX = colorX(col, s) - mx,
-              offsetY = colorY(col, s) - my
-            )
-          )
-          $.setState(newState) >> drawBackground(newState)
-        case None =>
-          Callback.empty
-      }
+    override def onDragStart(s: State, draggable: Draggable, x: Double, y: Double): Callback = {
+      val (col, _) = draggable
+      val newState = s.copy(
+        luminance = col.luminance,
+        dragState = DragState(
+          dragging = Some(draggable),
+          startX = x,
+          startY = y,
+          offsetX = colorX(col, s) - x,
+          offsetY = colorY(col, s) - y
+        )
+      )
+      $.setState(newState) >> drawBackground(newState)
     }
 
-    def handleMouseMove(p: Props)(e: ReactMouseEventH) = $.state.flatMap { s =>
-      import p._
-      import s._
-      val (mx, my) = mouseOffset(e)
-
-      import dragState.{offsetX, offsetY}
-      dragState.dragging match {
-        case Some((col, i)) =>
-          val newCol = col.copy(lab = colorAt(mx + offsetX, my + offsetY, s))
-          val newState = s.copy(dragState = dragState.copy(dragging = Some((newCol, i))))
-          $.setState(newState) >>
-            proxy.dispatch(UpdateColor(i, newCol)) >>
-            drawForeground(p, s)
-
-        case None =>
-          Callback.empty
-      }
+    override def onDrag(draggable: Draggable, x: Double, y: Double, p: Props, s: State): Callback = {
+      val (col, i) = draggable
+      val newCol = col.copy(lab = colorAt(x, y, s))
+      val newState = s.copy(dragState = s.dragState.copy(dragging = Some((newCol, i))))
+      $.setState(newState) >>
+        p.proxy.dispatch(UpdateColor(i, newCol)) >>
+        drawForeground(p, s)
     }
 
-    def handleMouseUp(p: Props)(e: ReactMouseEventH) = $.state.flatMap { s =>
+    override def onMouseWheel(draggable: Option[Draggable], deltaY: Double, p: Props, s: State): Callback = {
       import p._
       import s._
-
-      $.modState(_.copy(
-        dragState = dragState.copy(dragging = None)
-      ))
-    }
-
-    def handleMouseWheel(p: Props)(e: ReactWheelEventH) = $.state.flatMap { s =>
-      import p._
-      import s._
-
-      val (mx, my) = mouseOffset(e)
-      // TODO: cross browser deltaY
-      // val deltaY = mouseDeltaY(e)
-      // val deltaY = if (e.nativeEvent.detail < 0 || e.nativeEvent.asInstanceOf[js.Dynamic].wheelDelta.asInstanceOf[Int] > 0) -1 else 1
-      val deltaY = e.deltaY
-      // console.log(deltaY, e.deltaY)
-
-      e.preventDefault()
-
-      hitDraggable(mx, my, p, s) match {
+      draggable match {
         case Some((col, i)) =>
           val col = palette(i)
           val newCol = col.copy(lab = col.lab.copy(l = (col.l - deltaY / 10.0).max(0).min(100)))

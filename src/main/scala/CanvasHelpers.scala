@@ -23,8 +23,8 @@ object CanvasHelpers {
   }
 
   def percentCirle(ctx: CanvasRenderingContext2D, x: Double, y: Double, r: Double, width: Double, a: Double, refa: Option[Double] = None, fillColor: Option[String] = None) {
-    def stroke(color: String, start: Double = 0.0, end: Double = 1.0) { arcStroke(ctx, x, y, r, color, start, end) }
-    def fill(color: String, start: Double = 0.0, end: Double = 1.0) { arcFill(ctx, x, y, r, color, start, end) }
+    def stroke(color: String, start: Double, end: Double) { arcStroke(ctx, x, y, r, color, start, end) }
+    def fill(color: String, start: Double = 0, end: Double = 1.0) { arcFill(ctx, x, y, r, color, start, end) }
     fillColor foreach (fill(_))
 
     ctx.lineWidth = width
