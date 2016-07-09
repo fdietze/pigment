@@ -52,7 +52,7 @@ object ChromaCircleView extends ColorCanvasView {
       }
     }
 
-    def drawForeground(p: Props, s: State) = Callback {
+    def drawForegroundOnCanvas(fgCanvas: raw.HTMLCanvasElement, p: Props, s: State) {
       import p._
       import s._
       import CanvasHelpers._

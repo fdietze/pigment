@@ -49,6 +49,25 @@ trait ColorCanvasView {
       (mx, my)
     }
 
+    val bgCanvasRef = Ref[raw.HTMLCanvasElement]("canvas-bg")
+    val fgCanvasRef = Ref[raw.HTMLCanvasElement]("canvas-fg")
+
+    lazy val bgCanvas = bgCanvasRef($).get
+    lazy val fgCanvas = fgCanvasRef($).get
+
+    def drawBackground(s: State): Callback = Callback {
+      drawBackgroundOnCanvas(bgCanvas, s)
+    }
+    def drawForeground(p: Props, s: State) = Callback {
+      drawForegroundOnCanvas(fgCanvas, p, s)
+    }
+
+    def draw(p: Props, s: State) = Callback {
+      drawBackgroundOnCanvas(bgCanvas, s)
+      drawForegroundOnCanvas(fgCanvas, p, s)
+    }
+
+    def drawForegroundOnCanvas(fgCanvas: raw.HTMLCanvasElement, props: Props, state: State)
     def drawBackgroundOnCanvas(bgCanvas: raw.HTMLCanvasElement, state: State) {
       val ctx = bgCanvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
       val imageData = ctx.createImageData(bgCanvas.width, bgCanvas.height)
@@ -80,19 +99,6 @@ trait ColorCanvasView {
         fillColor = Some(color.toCSS)
       )
     }
-
-    val bgCanvasRef = Ref[raw.HTMLCanvasElement]("canvas-bg")
-    val fgCanvasRef = Ref[raw.HTMLCanvasElement]("canvas-fg")
-
-    lazy val bgCanvas = bgCanvasRef($).get
-    lazy val fgCanvas = fgCanvasRef($).get
-
-    def drawBackground(s: State): Callback = Callback {
-      drawBackgroundOnCanvas(bgCanvas, s)
-    }
-    def drawForeground(p: Props, s: State): Callback
-
-    def draw(p: Props, s: State) = drawBackground(s) >> drawForeground(p, s)
 
     def onMouseWheel(draggable: Option[Draggable], deltaY: Double, p: Props, s: State): Callback = Callback.empty
     def onDrag(draggable: Draggable, x: Double, y: Double, p: Props, s: State): Callback = Callback.empty

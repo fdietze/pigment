@@ -13,10 +13,12 @@ import diode.react._
 import scala.util.Try
 
 import CanvasHelpers._
+import Math._
 
 object ChromaView extends ColorCanvasView {
   case class State(
     luminance: Double = 100,
+    hueShift: Double = 0,
     dragState: DragState = DragState()
   ) {
     def withDragState(ds: DragState) = copy(dragState = ds)
@@ -25,10 +27,10 @@ object ChromaView extends ColorCanvasView {
   type Draggable = (Color, Int)
 
   class Backend(val $: BackendScope[Props, State]) extends BgFgBackend[State] {
-    def colorX(color: Color, s: State) = (if (color.isGray) color.hueHint else color.hue) / (Math.PI * 2) * width
+    def colorX(color: Color, s: State) = (((if (color.isGray) color.hueHint else color.hue) + s.hueShift + (PI * 2)) % (PI * 2)) / (PI * 2) * width
     def colorY(color: Color, s: State) = ((128 - color.chroma) / 128) * height
     def colorAt(x: Double, y: Double, s: State) = {
-      val hue = (x / width) * (Math.PI * 2)
+      val hue = ((x / width) * (Math.PI * 2) - s.hueShift + (PI * 2)) % (PI * 2)
       val chroma = 128 - (y / height * 128)
       val a = Math.cos(hue) * chroma
       val b = Math.sin(hue) * chroma
@@ -47,7 +49,7 @@ object ChromaView extends ColorCanvasView {
       }
     }
 
-    def drawForeground(p: Props, s: State) = Callback {
+    def drawForegroundOnCanvas(fgCanvas: raw.HTMLCanvasElement, p: Props, s: State) {
       import p._
       import s._
 
@@ -71,12 +73,13 @@ object ChromaView extends ColorCanvasView {
       draggable match {
         case Some((col, i)) =>
           val col = palette(i)
-          val newCol = col.copy(lab = col.lab.copy(l = (col.luminance - deltaY / 10).max(0).min(100)))
+          val newCol = col.copy(lab = col.lab.copy(l = (col.luminance - deltaY / 10.0).max(0).min(100)))
           val newState = s.copy(luminance = newCol.luminance)
           proxy.dispatch(UpdateColor(i, newCol)) >> $.setState(newState) >> drawBackground(newState)
 
         case None =>
-          Callback.empty
+          val newState = s.copy(hueShift = (hueShift + deltaY / 100.0) % (PI * 2))
+          $.setState(newState) >> draw(p, newState)
       }
     }
 
@@ -84,7 +87,7 @@ object ChromaView extends ColorCanvasView {
       val (col, _) = draggable
       val newState = s.copy(
         luminance = col.luminance,
-        DragState(
+        dragState = DragState(
           dragging = Some(draggable),
           startX = x,
           startY = y,
