@@ -23,6 +23,7 @@ object Main extends js.JSApp {
       <.div(
         ^.display := "flex",
         ^.flex := "1 1 auto",
+        ChromaCircleView(m),
         ChromaView(m),
         LuminanceView(m),
         DistanceListView(m),

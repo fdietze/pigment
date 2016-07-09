@@ -12,32 +12,27 @@ import diode.react._
 
 import scala.util.Try
 
-import Math._
+import CanvasHelpers._
 
 object ChromaView extends ColorCanvasView {
-  val chromaCircleRadius = width * 0.4
-  val chromaCircleBorder = 2.0
-
   case class State(
-    chroma: Double = 100,
-    luminance: Double = 70,
+    luminance: Double = 100,
     dragState: DragState = DragState()
   ) {
-    def zoom = chromaCircleRadius / chroma
     def withDragState(ds: DragState) = copy(dragState = ds)
   }
 
   type Draggable = (Color, Int)
 
   class Backend(val $: BackendScope[Props, State]) extends BgFgBackend[State] {
-    def colorX(color: Color, s: State) = (if (color.isGray) 0 else s.zoom * color.a) + width / 2
-    def colorY(color: Color, s: State) = (if (color.isGray) 0 else s.zoom * color.b) + height / 2
-    def colorAt(x: Double, y: Double, s: State): LAB = {
-      val a = (x - width / 2) / s.zoom
-      val b = (y - height / 2) / s.zoom
-      val l = s.luminance
-      def hue = ((PI * 2) + atan2((y - height / 2), (x - width / 2))) % (PI * 2)
-      LAB(l, a, b, hueHint = hue)
+    def colorX(color: Color, s: State) = (if (color.isGray) color.hueHint else color.hue) / (Math.PI * 2) * width
+    def colorY(color: Color, s: State) = ((128 - color.chroma) / 128) * height
+    def colorAt(x: Double, y: Double, s: State) = {
+      val hue = (x / width) * (Math.PI * 2)
+      val chroma = 128 - (y / height * 128)
+      val a = Math.cos(hue) * chroma
+      val b = Math.sin(hue) * chroma
+      LAB(s.luminance, a, b, hueHint = hue)
     }
 
     override def hitDraggable(x: Double, y: Double, p: Props, s: State): Option[(Color, Int)] = {
@@ -55,28 +50,33 @@ object ChromaView extends ColorCanvasView {
     def drawForeground(p: Props, s: State) = Callback {
       import p._
       import s._
-      import CanvasHelpers._
 
       val ctx = fgCanvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
 
       ctx.asInstanceOf[js.Dynamic].resetTransform() //TODO: add to scalajs.dom library
       ctx.clearRect(0, 0, fgCanvas.width, fgCanvas.height)
 
-      // circle on chroma:
-      percentCirle(ctx, width / 2, height / 2, chromaCircleRadius, width = chromaCircleBorder, luminance / 100.0)
-
       val colors = dragState.dragging match {
         case Some((col, i)) => palette.updated(i, col)
         case None => palette
       }
-      if (chroma > 0) {
-        for (color <- colors) {
-          drawColor(ctx, color, color.luminance / 100.0, luminance / 100.0, s)
-        }
-      } else { // chroma is zero => infinite zoom, only draw gray colors
-        for (color <- colors if color.isGray) {
-          drawColor(ctx, color, color.luminance / 100.0, luminance / 100.0, s)
-        }
+      for (color <- colors) {
+        drawColor(ctx, color, color.luminance / 100.0, s.luminance / 100.0, s)
+      }
+    }
+
+    override def onMouseWheel(draggable: Option[Draggable], deltaY: Double, p: Props, s: State): Callback = {
+      import p._
+      import s._
+      draggable match {
+        case Some((col, i)) =>
+          val col = palette(i)
+          val newCol = col.copy(lab = col.lab.copy(l = (col.luminance - deltaY / 10).max(0).min(100)))
+          val newState = s.copy(luminance = newCol.luminance)
+          proxy.dispatch(UpdateColor(i, newCol)) >> $.setState(newState) >> drawBackground(newState)
+
+        case None =>
+          Callback.empty
       }
     }
 
@@ -84,7 +84,7 @@ object ChromaView extends ColorCanvasView {
       val (col, _) = draggable
       val newState = s.copy(
         luminance = col.luminance,
-        dragState = DragState(
+        DragState(
           dragging = Some(draggable),
           startX = x,
           startY = y,
@@ -104,21 +104,6 @@ object ChromaView extends ColorCanvasView {
         drawForeground(p, s)
     }
 
-    override def onMouseWheel(draggable: Option[Draggable], deltaY: Double, p: Props, s: State): Callback = {
-      import p._
-      import s._
-      draggable match {
-        case Some((col, i)) =>
-          val col = palette(i)
-          val newCol = col.copy(lab = col.lab.copy(l = (col.l - deltaY / 10.0).max(0).min(100)))
-          val newState = s.copy(luminance = newCol.l)
-          proxy.dispatch(UpdateColor(i, newCol)) >> $.setState(newState) >> drawBackground(newState)
-
-        case None =>
-          val newState = s.copy(chroma = (chroma + deltaY / 10.0).max(0).min(128))
-          $.setState(newState) >> drawBackground(newState)
-      }
-    }
   }
 
   private val component = ReactComponentB[Props]("ChromaView")
