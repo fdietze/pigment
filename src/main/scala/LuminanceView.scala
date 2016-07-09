@@ -188,16 +188,17 @@ object LuminanceView extends CanvasView {
 
       val (mx, my) = mouseOffset(e)
       // TODO: cross browser deltaY
-      // val deltaY = e.deltaY
-      val deltaY = if (e.nativeEvent.detail < 0 || e.nativeEvent.asInstanceOf[js.Dynamic].wheelDelta.asInstanceOf[Int] > 0) 1 else -1
-      console.log(deltaY)
+      // val deltaY = mouseDeltaY(e)
+      // val deltaY = if (e.nativeEvent.detail < 0 || e.nativeEvent.asInstanceOf[js.Dynamic].wheelDelta.asInstanceOf[Int] > 0) -1 else 1
+      val deltaY = e.deltaY
+      // console.log(deltaY, e.deltaY)
 
       e.preventDefault()
 
       hitDraggable(mx, my, p, s) match {
         case Some((col, i)) =>
           val col = palette(i)
-          val newCol = col.withChroma((col.chroma - deltaY * 5).max(0).min(128))
+          val newCol = col.withChroma((col.chroma - deltaY / 10).max(0).min(128))
           val newState = s.copy(chroma = newCol.chroma)
           proxy.dispatch(UpdateColor(i, newCol)) >> $.setState(newState) >> drawBackground(newState)
 
