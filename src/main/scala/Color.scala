@@ -26,6 +26,7 @@ final case class LAB(l: Double, a: Double, b: Double, hueHint: Double = PI) {
 
 final case class RGB(r: Int, g: Int, b: Int) {
   def toCSS = s"rgb($r, $g, $b)"
+  def toHEX = "%02X%02X%02X" format (r, g, b)
 }
 
 @JSExport

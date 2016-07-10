@@ -23,12 +23,14 @@ object Main extends js.JSApp {
       <.div(
         ^.display := "flex",
         ^.flex := "1 1 auto",
+        ^.flexWrap := "wrap",
         ChromaCircleView(m),
         ChromaView(m),
         LuminanceView(m),
         DistanceListView(m),
         modelConnect(g => DistanceGraphView(g.value.graph, 200, 200)),
-        MatrixPreview(m)
+        MatrixPreview(m),
+        PaletteView(m)
       )
     }
     .build
