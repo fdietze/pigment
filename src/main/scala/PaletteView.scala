@@ -26,13 +26,23 @@ object PaletteView {
         <.tbody(
           <.tr(
             p.palette map { col =>
+              val rgb = col.lab.toRGB
               <.td(
-                <.div(^.width := 50, ^.height := 50, ^.backgroundColor := col.toCSS),
-                <.div(
+                <.div(^.width := "50px", ^.height := "50px",
+                  ^.backgroundColor := col.toCSS),
+                <.pre(
                   ^.fontFamily := "monospace",
                   ^.fontSize := "11px",
                   ^.textAlign := "center",
-                  s"#${col.lab.toRGB.toHEX}"
+                  ^.margin := "0px",
+                  s"#${rgb.toHEX}"
+                ),
+                <.pre(
+                  ^.fontFamily := "monospace",
+                  ^.fontSize := "8px",
+                  ^.textAlign := "center",
+                  ^.margin := "0px",
+                  "%3d,%3d,%3d" format (rgb.r, rgb.g, rgb.b)
                 )
               )
             }
