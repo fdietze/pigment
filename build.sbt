@@ -46,7 +46,8 @@ workbenchSettings
 
 bootSnippet := "pigment.Main().main();"
 
-updateBrowsers <<= updateBrowsers.triggeredBy(fastOptJS in Compile)
+// updateBrowsers <<= updateBrowsers.triggeredBy(fastOptJS in Compile)
+refreshBrowsers <<= refreshBrowsers.triggeredBy(fastOptJS in Compile)
 
 // scalaxy - rewrite collection code to while loops
 scalacOptions += "-Xplugin-require:scalaxy-streams"
