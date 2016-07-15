@@ -23,7 +23,7 @@ object DistanceListView {
     def pair(a: LAB, b: LAB) = {
       <.div(
         ^.width := "40px",
-        ^.height := "40px",
+        ^.height := "20px",
         ^.position := "relative",
         <.div(
           ^.width := "20px",
@@ -40,35 +40,15 @@ object DistanceListView {
           ^.top := "0px",
           ^.left := "20px",
           ^.backgroundColor := b.toCSS
-        ),
-        <.span(
-          ^.width := "40px",
-          ^.height := "20px",
-          ^.position := "absolute",
-          ^.top := "20px",
-          ^.left := "0px",
-          ^.paddingTop := "2px",
-          ^.backgroundColor := b.toCSS,
-          ^.fontFamily := "Monospace",
-          ^.fontSize := "10px",
-          ^.color := a.toCSS,
-          "h0i7ka"
         )
       )
     }
     def render(p: Props) = {
-      <.table(
-        <.thead(<.tr(<.th())),
-        <.tbody(
-          p.palette.combinations(2).toSeq.sortBy { case IndexedSeq(a, b) => ColorDistance.ciede2000(a.lab, b.lab) }.map {
-            case IndexedSeq(a, b) =>
-              <.tr(
-                <.td(
-                  pair(a.lab, b.lab)
-                )
-              )
-          }
-        )
+      <.div(
+        p.palette.combinations(2).toSeq.sortBy { case IndexedSeq(a, b) => ColorDistance.ciede2000(a.lab, b.lab) }.map {
+          case IndexedSeq(a, b) =>
+            pair(a.lab, b.lab)
+        }
       )
     }
   }
