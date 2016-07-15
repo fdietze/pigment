@@ -28,9 +28,9 @@ import fdietze.scalajs.react.components.D3ForceLayout
 
 object DistanceGraphView extends D3ForceLayout[Color, DiEdge] {
   override val reuseVertexCoordinatesOnUpdate = true
-  override def linkDistance(e: DiEdge[Color]) = ColorDistance.ciede2000(e.source.lab, e.target.lab)
+  override def linkDistance(e: DiEdge[Color]) = ColorDistance.ciede2000(e.source.lab, e.target.lab) * 1.3
   override def charge(v: Color) = 0
-  override def linkStrength(e: DiEdge[Color]) = 1
+  override def linkStrength(e: DiEdge[Color]) = 2
   override def styleVertices(sel: VertexSelection) = {
     super.styleVertices(sel)
       .attr("r", 10.0)
