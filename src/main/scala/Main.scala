@@ -21,16 +21,23 @@ object Main extends js.JSApp {
   val MainView = ReactComponentB[ModelProxy[RootModel]]("MainView")
     .render_P { m =>
       <.div(
-        ^.display := "flex",
-        ^.flex := "1 1 auto",
-        ^.flexWrap := "wrap",
-        ChromaCircleView(m),
-        ChromaView(m),
-        LuminanceView(m),
-        DistanceListView(m),
-        modelConnect(g => DistanceGraphView(g.value.graph, 200, 200)),
-        MatrixPreview(m),
-        PaletteView(m)
+        PaletteView(m),
+        <.div(
+          ^.display := "flex",
+          ^.flex := "1 1 auto",
+          ^.flexWrap := "wrap",
+          ChromaCircleView(m),
+          ChromaView(m),
+          LuminanceView(m)
+        ),
+        <.div(
+          ^.display := "flex",
+          ^.flex := "1 1 auto",
+          ^.flexWrap := "wrap",
+          modelConnect(g => DistanceGraphView(g.value.graph, 200, 200)),
+          DistanceListView(m),
+          MatrixPreview(m)
+        )
       )
     }
     .build

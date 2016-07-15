@@ -30,6 +30,7 @@ case class Color(lab: LAB) {
 // Actions
 case class AddColor(color: Color) extends Action
 case class UpdateColor(index: Int, color: Color) extends Action
+case class RemoveColor(index: Int) extends Action
 
 // Circuit
 object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
@@ -46,6 +47,7 @@ object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
     override def handle = {
       case AddColor(c) => updated(value :+ c)
       case UpdateColor(index, c) => updated(value.updated(index, c))
+      case RemoveColor(i) => updated(value.take(i) ++ value.drop(i + 1))
     }
   }
 
