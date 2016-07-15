@@ -33,7 +33,7 @@ object MatrixPreview {
           ^.left := "0px",
           ^.backgroundColor := a.toCSS
         ),
-        <.span(
+        <.div(
           ^.width := "20px",
           ^.height := "20px",
           ^.position := "absolute",
@@ -41,13 +41,13 @@ object MatrixPreview {
           ^.left := "20px",
           ^.backgroundColor := b.toCSS
         ),
-        <.span(
+        <.div(
           ^.width := "40px",
-          ^.height := "20px",
+          ^.height := "18px",
+          ^.paddingTop := "2px",
           ^.position := "absolute",
           ^.top := "20px",
           ^.left := "0px",
-          ^.paddingTop := "2px",
           ^.backgroundColor := b.toCSS,
           ^.fontFamily := "Monospace",
           ^.fontSize := "10px",
@@ -58,12 +58,14 @@ object MatrixPreview {
     }
     def render(p: Props) = {
       <.table(
-        <.thead(<.tr(<.th())),
+        ^.borderSpacing := "0px",
+        // <.thead(<.tr(<.th())),
         <.tbody(
           p.palette map { a =>
             <.tr(
               p.palette map { b =>
                 <.td(
+                  ^.padding := "0px",
                   cellPreview(a.lab, b.lab)
                 )
               }

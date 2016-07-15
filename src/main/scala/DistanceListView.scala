@@ -45,10 +45,13 @@ object DistanceListView {
     }
     def render(p: Props) = {
       <.div(
-        p.palette.combinations(2).toSeq.sortBy { case IndexedSeq(a, b) => ColorDistance.ciede2000(a.lab, b.lab) }.map {
-          case IndexedSeq(a, b) =>
-            pair(a.lab, b.lab)
-        }
+        (for (i <- 0 until p.palette.size; j <- 0 until p.palette.size if i < j) yield { (p.palette(i), p.palette(j)) })
+          .sortBy {
+            case (a, b) => ColorDistance.ciede2000(a.lab, b.lab)
+          }.map {
+            case (a, b) =>
+              pair(a.lab, b.lab)
+          }
       )
     }
   }
