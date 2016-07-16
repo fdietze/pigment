@@ -57,13 +57,14 @@ object MatrixPreview {
       )
     }
     def render(p: Props) = {
+      val colors = p.palette.sortBy(_.group)
       <.table(
         ^.borderSpacing := "0px",
         // <.thead(<.tr(<.th())),
         <.tbody(
-          p.palette map { a =>
+          colors map { a =>
             <.tr(
-              p.palette map { b =>
+              colors map { b =>
                 <.td(
                   ^.padding := "0px",
                   cellPreview(a.lab, b.lab)
