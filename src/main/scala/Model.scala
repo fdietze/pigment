@@ -36,11 +36,11 @@ case class RemoveColor(index: Int) extends Action
 object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
   // define initial value for the application model
   def initialModel = RootModel(Array(
-    Color(LAB(30, -75, 20)),
-    Color(LAB(60, 15, 12)),
-    Color(LAB(70, 100, 0)),
-    Color(LAB(30, 0, 0)),
-    Color(LAB(50, 1, 0))
+    Color(LAB(20, -22, -15)),
+    Color(LAB(86, 38, 71)),
+    Color(LAB(75, 79, 0)),
+    Color(LAB(75, -32, -57)),
+    Color(LAB(75, -75, 27))
   ))
 
   val paletteHandler = new ActionHandler(zoomRW(_.palette)((m, v) => m.copy(palette = v))) {
