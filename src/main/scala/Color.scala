@@ -24,6 +24,14 @@ final case class LAB(l: Double, a: Double, b: Double, hueHint: Double = PI) {
   def toCSS = toRGB.toCSS
 }
 
+object LCH {
+  def apply(l: Double, c: Double, h: Double) = {
+    val a = cos(h) * c
+    val b = sin(h) * c
+    LAB(l, a, b)
+  }
+}
+
 final case class RGB(r: Int, g: Int, b: Int) {
   def toCSS = s"rgb($r, $g, $b)"
   def toHEX = "%02X%02X%02X" format (r, g, b)

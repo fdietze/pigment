@@ -9,12 +9,13 @@ import scalax.collection.GraphEdge._
 
 // Model
 case class RootModel(palette: IndexedSeq[Color] = IndexedSeq.empty) {
+  lazy val groups = palette.zipWithIndex.groupBy { case (col, i) => col.group }
   lazy val vertices = palette
   lazy val edges = vertices.combinations(2).map { case IndexedSeq(source, target) => DiEdge(source, target) }.toSeq
   lazy val graph = Graph.from[Color, DiEdge](vertices, edges)
 }
 
-case class Color(lab: LAB) {
+case class Color(lab: LAB, group: Int = 0) {
   def l = lab.l
   def a = lab.a
   def b = lab.b
@@ -36,7 +37,7 @@ case class RemoveColor(index: Int) extends Action
 object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
   // define initial value for the application model
   def initialModel = RootModel(Array(
-    Color(LAB(20, -22, -15)),
+    Color(LAB(20, -22, -15), group = 1),
     Color(LAB(86, 38, 71)),
     Color(LAB(75, 79, 0)),
     Color(LAB(75, -32, -57)),
