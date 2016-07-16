@@ -34,7 +34,13 @@ object PaletteView {
                     ^.backgroundColor := col.toCSS),
                   <.pre(
                     ^.fontFamily := "monospace",
-                    ^.fontSize := "11px",
+                    ^.fontSize := "8px",
+                    ^.margin := "0px",
+                    "%3d,%3d,%3d" format (col.l.toInt, col.a.toInt, col.b.toInt)
+                  ),
+                  <.pre(
+                    ^.fontFamily := "monospace",
+                    ^.fontSize := "8px",
                     ^.margin := "0px",
                     s"#${rgb.toHEX}"
                   ),
