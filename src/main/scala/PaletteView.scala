@@ -25,10 +25,17 @@ object PaletteView {
 
     def render(p: Props) = {
       <.div(
-        <.button(^.onClick --> p.proxy.dispatch(AddColor(Color(LCH(50, 50, 50), p.groups.keys.max + 1))), "+"),
         <.table(
           <.thead(<.tr(<.th())),
           <.tbody(
+            <.tr(
+              // <.td(
+              //   p.groups.keys.max + 1
+              // ),
+              <.td(
+                <.button(^.onClick --> p.proxy.dispatch(AddColor(Color(LCH(50, 50, 50), p.groups.keys.max + 1))), "+")
+              )
+            ),
             p.groups.map {
               case (groupId, group) =>
                 val avgLuminance = group.map(_._1.luminance).sum / group.size
@@ -43,6 +50,7 @@ object PaletteView {
                   huesOver.sorted.sliding(2).maxBy { case Seq(a, b) => b - a }.sum / 2
 
                 <.tr(
+                  // <.td(groupId),
                   group.map {
                     case (col, i) =>
                       val rgb = col.lab.toRGB
