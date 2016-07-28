@@ -40,7 +40,7 @@ object ChromaView extends ColorCanvasView {
     override def hitDraggable(x: Double, y: Double, p: Props, s: State): Option[(Color, Int)] = {
       import p._
       import s._
-      palette.zipWithIndex.find {
+      colors.zipWithIndex.find {
         case (col, i) =>
           val cx = colorX(col, s)
           val cy = colorY(col, s)
@@ -58,11 +58,11 @@ object ChromaView extends ColorCanvasView {
       ctx.asInstanceOf[js.Dynamic].resetTransform() //TODO: add to scalajs.dom library
       ctx.clearRect(0, 0, fgCanvas.width, fgCanvas.height)
 
-      val colors = dragState.dragging match {
-        case Some((col, i)) => palette.updated(i, col)
-        case None => palette
+      val drawColors = dragState.dragging match {
+        case Some((col, i)) => colors.updated(i, col)
+        case None => colors
       }
-      for (color <- colors) {
+      for (color <- drawColors) {
         drawColor(ctx, color, color.luminance / 100.0, s.luminance / 100.0, s)
       }
     }
@@ -72,7 +72,7 @@ object ChromaView extends ColorCanvasView {
       import s._
       draggable match {
         case Some((col, i)) =>
-          val col = palette(i)
+          val col = colors(i)
           val newCol = col.copy(lab = col.lab.copy(l = (col.luminance - deltaY / 10.0).max(0).min(100)))
           val newState = s.copy(luminance = newCol.luminance)
           proxy.dispatch(UpdateColor(i, newCol)) >> $.setState(newState) >> drawBackground(newState)

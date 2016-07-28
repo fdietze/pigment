@@ -30,7 +30,7 @@ trait ColorCanvasView {
   )
 
   case class Props(proxy: ModelProxy[RootModel]) {
-    def palette = proxy.value.palette
+    def colors = proxy.value.colorScheme.colors
   }
 
   trait BgFgBackend[State <: { val dragState: DragState; def withDragState(dragState: DragState): State }] {
@@ -73,7 +73,7 @@ trait ColorCanvasView {
       val imageData = ctx.createImageData(bgCanvas.width, bgCanvas.height)
 
       val data = imageData.data.asInstanceOf[js.Array[Int]]
-      val start = System.currentTimeMillis
+      val start = System.nanoTime
       for (x <- 0 until bgCanvas.width; y <- 0 until bgCanvas.height) {
         val i = (y * bgCanvas.width + x) * 4
         val color = colorAt(x, y, state).toRGB
@@ -82,8 +82,8 @@ trait ColorCanvasView {
         data(i + 2) = color.b
         data(i + 3) = 255
       }
-      val duration = System.currentTimeMillis - start
-      // println(s"${duration}ms")
+      val duration = System.nanoTime - start
+      println(s"${duration}ns")
       ctx.putImageData(imageData, 0, 0)
     }
 

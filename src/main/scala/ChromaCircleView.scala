@@ -43,7 +43,7 @@ object ChromaCircleView extends ColorCanvasView {
     override def hitDraggable(x: Double, y: Double, p: Props, s: State): Option[(Color, Int)] = {
       import p._
       import s._
-      palette.zipWithIndex.find {
+      colors.zipWithIndex.find {
         case (col, i) =>
           val cx = colorX(col, s)
           val cy = colorY(col, s)
@@ -65,16 +65,16 @@ object ChromaCircleView extends ColorCanvasView {
       // circle on chroma:
       percentCirle(ctx, width / 2, height / 2, chromaCircleRadius, width = chromaCircleBorder, luminance / 100.0)
 
-      val colors = dragState.dragging match {
-        case Some((col, i)) => palette.updated(i, col)
-        case None => palette
+      val drawColors = dragState.dragging match {
+        case Some((col, i)) => colors.updated(i, col)
+        case None => colors
       }
       if (chroma > 0) {
-        for (color <- colors) {
+        for (color <- drawColors) {
           drawColor(ctx, color, color.luminance / 100.0, luminance / 100.0, s)
         }
       } else { // chroma is zero => infinite zoom, only draw gray colors
-        for (color <- colors if color.isGray) {
+        for (color <- drawColors if color.isGray) {
           drawColor(ctx, color, color.luminance / 100.0, luminance / 100.0, s)
         }
       }
@@ -109,7 +109,7 @@ object ChromaCircleView extends ColorCanvasView {
       import s._
       draggable match {
         case Some((col, i)) =>
-          val col = palette(i)
+          val col = colors(i)
           val newCol = col.copy(lab = col.lab.copy(l = (col.l - deltaY / 10.0).max(0).min(100)))
           val newState = s.copy(luminance = newCol.l)
           proxy.dispatch(UpdateColor(i, newCol)) >> $.setState(newState) >> drawBackground(newState)

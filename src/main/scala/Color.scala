@@ -4,6 +4,19 @@ import scala.scalajs.js
 import js.annotation._
 import Math._
 
+case class Color(lab: LAB, group: Int = 0) {
+  def l = lab.l
+  def a = lab.a
+  def b = lab.b
+  def luminance = lab.luminance
+  def chroma = lab.chroma
+  def hue = lab.hue
+  def hueHint = lab.hueHint
+  def toCSS = lab.toCSS
+  def isGray = lab.isGray
+  def withChroma(c: Double) = copy(lab = lab.withChroma(c))
+}
+
 final case class LAB(l: Double, a: Double, b: Double, hueHint: Double = PI) {
   def luminance = l
   def chroma = sqrt(a * a + b * b)

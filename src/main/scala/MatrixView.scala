@@ -15,7 +15,7 @@ import scala.util.Try
 object MatrixView {
 
   case class Props(proxy: ModelProxy[RootModel]) {
-    def palette = proxy.value.palette
+    def colors = proxy.value.colorScheme.colors
   }
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -57,7 +57,7 @@ object MatrixView {
       )
     }
     def render(p: Props) = {
-      val colors = p.palette.sortBy(_.group)
+      val colors = p.colors.sortBy(_.group)
       <.table(
         ^.borderSpacing := "0px",
         // <.thead(<.tr(<.th())),

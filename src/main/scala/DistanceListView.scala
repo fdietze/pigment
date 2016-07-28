@@ -15,7 +15,7 @@ import scala.util.Try
 object DistanceListView {
 
   case class Props(proxy: ModelProxy[RootModel]) {
-    def palette = proxy.value.palette
+    def colors = proxy.value.colorScheme.colors
     def groups = proxy.value.groups
   }
 
