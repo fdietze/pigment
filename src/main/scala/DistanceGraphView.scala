@@ -27,13 +27,22 @@ import scalax.collection.GraphEdge._
 import fdietze.scalajs.react.components.D3ForceLayout
 
 object DistanceGraphView extends D3ForceLayout[Color, DiEdge] {
+  val scale = 1.3
+  val radius = 10.0
+
   override val reuseVertexCoordinatesOnUpdate = true
-  override def linkDistance(e: DiEdge[Color]) = ColorDistance.ciede2000(e.source.lab, e.target.lab) * 1.3
+  override val panAndZoom = false
+  override def linkDistance(e: DiEdge[Color]) = ColorDistance.ciede2000(e.source.lab, e.target.lab) * scale
   override def charge(v: Color) = 0
   override def linkStrength(e: DiEdge[Color]) = 2
   override def styleVertices(sel: VertexSelection) = {
     super.styleVertices(sel)
-      .attr("r", 10.0)
+      .attr("r", radius)
       .style("fill", (d: D3Vertex) => d.v.toCSS)
+  }
+  override def styleEdges(sel: EdgeSelection) = {
+    super.styleEdges(sel)
+      .style("stroke-dasharray", (d: D3Edge) => s"${radius * 2 - 2} 2")
+      .style("stroke-dashoffset", (d: D3Edge) => s"${-2 - radius}")
   }
 }
