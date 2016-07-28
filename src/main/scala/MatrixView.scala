@@ -12,7 +12,7 @@ import diode.react._
 
 import scala.util.Try
 
-object MatrixPreview {
+object MatrixView {
 
   case class Props(proxy: ModelProxy[RootModel]) {
     def palette = proxy.value.palette
@@ -20,7 +20,7 @@ object MatrixPreview {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    def cellPreview(a: LAB, b: LAB) = {
+    def renderCell(a: LAB, b: LAB) = {
       <.div(
         ^.width := "40px",
         ^.height := "40px",
@@ -67,7 +67,7 @@ object MatrixPreview {
               colors map { b =>
                 <.td(
                   ^.padding := "0px",
-                  cellPreview(a.lab, b.lab)
+                  renderCell(a.lab, b.lab)
                 )
               }
             )
@@ -77,7 +77,7 @@ object MatrixPreview {
     }
   }
 
-  private val component = ReactComponentB[Props]("MatrixPreview")
+  private val component = ReactComponentB[Props]("MatrixView")
     .renderBackend[Backend]
     .build
 

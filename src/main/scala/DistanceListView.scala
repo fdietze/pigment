@@ -54,7 +54,7 @@ object DistanceListView {
         limited
       }
 
-      println(groups.mkString("\n"))
+      // println(groups.mkString("\n"))
       <.div(
         ^.display := "flex",
         ^.flexWrap := "wrap",
