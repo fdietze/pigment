@@ -4,50 +4,57 @@ import scala.scalajs.js
 import js.annotation._
 import Math._
 
-case class Color(lab: LAB, group: Int = 0) {
-  def l = lab.l
-  def a = lab.a
-  def b = lab.b
-  def luminance = lab.luminance
-  def chroma = lab.chroma
-  def hue = lab.hue
-  def hueHint = lab.hueHint
-  def toCSS = lab.toCSS
-  def isGray = lab.isGray
-  def withChroma(c: Double) = copy(lab = lab.withChroma(c))
+sealed trait Color {
+  def lab: LAB = ???
+  def lch: LCH = ???
+  def rgb: RGB = ???
+
+  def isGray: Boolean = ???
+
+  def toCSS: String = rgb.toCSS
+  def toHEX: String = rgb.toCSS
 }
 
-final case class LAB(l: Double, a: Double, b: Double, hueHint: Double = PI) {
+final case class RGB(r: Int, g: Int, b: Int) extends Color {
+  override def toCSS = s"rgb($r, $g, $b)"
+  override def toHEX = "%02X%02X%02X" format (r, g, b)
+
+  override def isGray = r == g && g == b
+
+  override def rgb = this
+}
+
+final case class LAB(l: Double, a: Double, b: Double, hueHint: Double = PI) extends Color {
   def luminance = l
-  def chroma = sqrt(a * a + b * b)
-  def hue = ((PI * 2) + atan2(b, a)) % (PI * 2)
-  def isGray = a == 0 && b == 0
 
-  def withChroma(c: Double) = {
-    if (isGray)
-      copy(a = cos(hueHint) * c, b = sin(hueHint) * c)
-    else
-      copy(a = a / chroma * c, b = b / chroma * c, hueHint = hue)
+  override def isGray = a == 0 && b == 0
+
+  override def lab = this
+  override lazy val lch = {
+    val chroma = sqrt(a * a + b * b)
+    val hue = ((PI * 2) + atan2(b, a)) % (PI * 2)
+    LCH(l, chroma, if (isGray) hueHint else hue)
   }
-
-  def toRGB: RGB = {
+  override lazy val rgb: RGB = {
     val rgb = ColorConversion.labToRGB(l, a, b)
     RGB(rgb(0), rgb(1), rgb(2))
   }
-  def toCSS = toRGB.toCSS
 }
 
-object LCH {
-  def apply(l: Double, c: Double, h: Double) = {
+final case class LCH(l: Double, c: Double, h: Double) extends Color {
+  def luminance = l
+  def chroma = c
+  def hue = h
+
+  override def isGray = c == 0
+
+  override def lab = {
     val a = cos(h) * c
     val b = sin(h) * c
-    LAB(l, a, b)
+    LAB(l, a, b, hueHint = h)
   }
-}
-
-final case class RGB(r: Int, g: Int, b: Int) {
-  def toCSS = s"rgb($r, $g, $b)"
-  def toHEX = "%02X%02X%02X" format (r, g, b)
+  override def lch = this
+  override lazy val rgb: RGB = lab.rgb
 }
 
 @JSExport

@@ -57,7 +57,7 @@ object MatrixView {
       )
     }
     def render(p: Props) = {
-      val colors = p.colors.sortBy(_.group)
+      import p._
       <.table(
         ^.borderSpacing := "0px",
         // <.thead(<.tr(<.th())),

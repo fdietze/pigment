@@ -27,29 +27,15 @@ object ChromaCircleView extends ColorCanvasView {
     def withDragState(ds: DragState) = copy(dragState = ds)
   }
 
-  type Draggable = (Color, Int)
-
   class Backend(val $: BackendScope[Props, State]) extends BgFgBackend[State] {
-    def colorX(color: Color, s: State) = (if (color.isGray) 0 else s.zoom * color.a) + width / 2
-    def colorY(color: Color, s: State) = (if (color.isGray) 0 else s.zoom * color.b) + height / 2
+    def colorX(color: Color, s: State) = (if (color.isGray) 0 else s.zoom * color.lab.a) + width / 2
+    def colorY(color: Color, s: State) = (if (color.isGray) 0 else s.zoom * color.lab.b) + height / 2
     def colorAt(x: Double, y: Double, s: State): LAB = {
       val a = (x - width / 2) / s.zoom
       val b = (y - height / 2) / s.zoom
       val l = s.luminance
       def hue = ((PI * 2) + atan2((y - height / 2), (x - width / 2))) % (PI * 2)
       LAB(l, a, b, hueHint = hue)
-    }
-
-    override def hitDraggable(x: Double, y: Double, p: Props, s: State): Option[(Color, Int)] = {
-      import p._
-      import s._
-      colors.zipWithIndex.find {
-        case (col, i) =>
-          val cx = colorX(col, s)
-          val cy = colorY(col, s)
-          val r = colorRadius + colorBorder / 2.0
-          (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r
-      }
     }
 
     def drawForegroundOnCanvas(fgCanvas: raw.HTMLCanvasElement, p: Props, s: State) {
@@ -65,25 +51,21 @@ object ChromaCircleView extends ColorCanvasView {
       // circle on chroma:
       percentCirle(ctx, width / 2, height / 2, chromaCircleRadius, width = chromaCircleBorder, luminance / 100.0)
 
-      val drawColors = dragState.dragging match {
-        case Some((col, i)) => colors.updated(i, col)
-        case None => colors
-      }
       if (chroma > 0) {
-        for (color <- drawColors) {
-          drawColor(ctx, color, color.luminance / 100.0, luminance / 100.0, s)
+        for (color <- colors) {
+          drawColor(ctx, color, color.lab.luminance / 100.0, luminance / 100.0, s)
         }
       } else { // chroma is zero => infinite zoom, only draw gray colors
-        for (color <- drawColors if color.isGray) {
-          drawColor(ctx, color, color.luminance / 100.0, luminance / 100.0, s)
+        for (color <- colors if color.isGray) {
+          drawColor(ctx, color, color.lab.luminance / 100.0, luminance / 100.0, s)
         }
       }
     }
 
     override def onDragStart(s: State, draggable: Draggable, x: Double, y: Double): Callback = {
-      val (col, _) = draggable
+      val (_, _, col) = draggable
       val newState = s.copy(
-        luminance = col.luminance,
+        luminance = col.lab.luminance,
         dragState = DragState(
           dragging = Some(draggable),
           startX = x,
@@ -96,11 +78,11 @@ object ChromaCircleView extends ColorCanvasView {
     }
 
     override def onDrag(draggable: Draggable, x: Double, y: Double, p: Props, s: State): Callback = {
-      val (col, i) = draggable
-      val newCol = col.copy(lab = colorAt(x, y, s))
-      val newState = s.copy(dragState = s.dragState.copy(dragging = Some((newCol, i))))
+      val (groupId, i, _) = draggable
+      val newCol = colorAt(x, y, s)
+      val newState = s.copy(dragState = s.dragState.copy(dragging = Some((groupId, i, newCol))))
       $.setState(newState) >>
-        p.proxy.dispatch(UpdateColor(i, newCol)) >>
+        p.proxy.dispatch(UpdateColor(groupId, i, newCol)) >>
         drawForeground(p, s)
     }
 
@@ -108,11 +90,11 @@ object ChromaCircleView extends ColorCanvasView {
       import p._
       import s._
       draggable match {
-        case Some((col, i)) =>
-          val col = colors(i)
-          val newCol = col.copy(lab = col.lab.copy(l = (col.l - deltaY / 10.0).max(0).min(100)))
+        case Some((groupId, i, col)) =>
+          val col = groups(groupId)(i)
+          val newCol = col.lab.copy(l = (col.lab.l - deltaY / 10.0).max(0).min(100))
           val newState = s.copy(luminance = newCol.l)
-          proxy.dispatch(UpdateColor(i, newCol)) >> $.setState(newState) >> drawBackground(newState)
+          proxy.dispatch(UpdateColor(groupId, i, newCol)) >> $.setState(newState) >> drawBackground(newState)
 
         case None =>
           val newState = s.copy(chroma = (chroma + deltaY / 10.0).max(0).min(128))

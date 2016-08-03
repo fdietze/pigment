@@ -34,7 +34,7 @@ object Main extends js.JSApp {
           ^.display := "flex",
           ^.flex := "1 1 auto",
           ^.flexWrap := "wrap",
-          modelConnect(g => DistanceGraphView(g.value.graph, 200, 200)),
+          modelConnect(g => DistanceGraphView(g.value.colorScheme.graph, 200, 200)),
           DistanceListView(m),
           MatrixView(m)
         )

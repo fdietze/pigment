@@ -16,7 +16,7 @@ object DistanceListView {
 
   case class Props(proxy: ModelProxy[RootModel]) {
     def colors = proxy.value.colorScheme.colors
-    def groups = proxy.value.groups
+    def groups = proxy.value.colorScheme.groups
   }
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -46,8 +46,7 @@ object DistanceListView {
     }
     def render(p: Props) = {
       val groups = p.groups.values ++ p.groups.values.toSeq.combinations(2).map(_.flatten)
-      val groupPairs = groups.map { group =>
-        val colors = group.map(_._1)
+      val groupPairs = groups.map { colors =>
         val pairs = (for (i <- 0 until colors.size; j <- 0 until colors.size if i < j) yield { (colors(i), colors(j)) })
         val sorted = pairs.sortBy { case (a, b) => ColorDistance.ciede2000(a.lab, b.lab) }
         val limited = if (sorted.size <= 10) sorted else sorted.take(5) ++ sorted.takeRight(5)
