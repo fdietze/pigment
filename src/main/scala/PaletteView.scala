@@ -78,7 +78,7 @@ object PaletteView {
                         ),
                         <.button(
                           ^.fontSize := "8px",
-                          ^.onClick --> p.proxy.dispatch(RemoveColor(groupId, i)), "remove"
+                          ^.onClick --> p.proxy.dispatch(RemoveColor(ColorIndex(groupId, i))), "remove"
                         )
                       )
                   },

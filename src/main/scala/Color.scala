@@ -10,6 +10,7 @@ sealed trait Color {
   def rgb: RGB = ???
 
   def isGray: Boolean = ???
+  def distanceTo(that: Color): Double = ColorDistance.ciede2000(this.lab, that.lab)
 
   def toCSS: String = rgb.toCSS
   def toHEX: String = rgb.toCSS

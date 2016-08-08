@@ -19,6 +19,7 @@ trait ColorCanvasView {
   val colorRadius = 10.0
   val colorBorder = 2.0
 
+  // TODO: type Draggable = (ColorIndex, Color)
   type Draggable = (Int, Int, Color)
 
   case class DragState(
