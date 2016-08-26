@@ -6,35 +6,47 @@ case class FitnessFunction(terms: Seq[Term] = Nil) {
   def apply(c: ColorScheme) = terms.map(term => term(c)).sum
 }
 
-case class Term(goal: Goal, metric: Metric, target: Target, modifiers: Seq[Modifier] = Nil) {
+trait Term {
+  def apply(c: ColorScheme): Double
+  def target: Target
+  def result(c: ColorScheme, measure: Measure) = {
+    val t = target(c)
+    if (t.isEmpty) 0
+    else measure(target(c))
+  }
+}
+
+case class Statistics(goal: Goal, measure: Measure, target: Target, modifiers: Seq[Modifier] = Nil) extends Term {
   def apply(c: ColorScheme) = {
     val t = target(c)
     if (t.isEmpty) 0
     else {
-      val result = metric(target(c))
+      val result = measure(target(c))
       val modified = modifiers.foldLeft(result)((res, modifier) => modifier(res))
       goal(modified)
     }
   }
 
-  def result(c: ColorScheme) = {
+}
+
+case class Approximation(target: Target, targetValue: Double) extends Term {
+  def apply(c: ColorScheme) = {
     val t = target(c)
     if (t.isEmpty) 0
-    else metric(target(c))
+    else -t.map(x => (x - targetValue) * (x - targetValue)).sum.toDouble / t.size
   }
-  override def toString = s"$goal $metric $target ${modifiers.mkString(",")}"
 }
 
 sealed trait Goal { def apply(x: Double): Double }
 case object Maximize extends Goal { def apply(x: Double) = x }
 case object Minimize extends Goal { def apply(x: Double) = -x }
-case class Approximate(goal: Double) extends Goal { def apply(x: Double) = -((goal - x).abs) }
+// case class Approximate(goal: Double) extends Goal { def apply(x: Double) = -((goal - x).abs) }
 
-sealed trait Metric { def apply(xs: Seq[Double]): Double }
-case object Min extends Metric { def apply(xs: Seq[Double]) = xs.min }
-case object Max extends Metric { def apply(xs: Seq[Double]) = xs.max }
-case object Mean extends Metric { def apply(xs: Seq[Double]) = xs.sum / xs.size }
-case object StdDev extends Metric {
+sealed trait Measure { def apply(xs: Seq[Double]): Double }
+case object Min extends Measure { def apply(xs: Seq[Double]) = xs.min }
+case object Max extends Measure { def apply(xs: Seq[Double]) = xs.max }
+case object Mean extends Measure { def apply(xs: Seq[Double]) = xs.sum / xs.size }
+case object StdDev extends Measure {
   def apply(xs: Seq[Double]) = {
     val mean = xs.sum / xs.size
     val variance = xs.map(x => (x - mean) * (x - mean)).sum
@@ -47,7 +59,6 @@ case class Chroma(groupId: Int) extends Target { def apply(c: ColorScheme) = c(g
 case class Luminance(groupId: Int) extends Target { def apply(c: ColorScheme) = c(groupId).map(_.lab.luminance) }
 case class IntraGroupDistance(groupId: Int) extends Target {
   def apply(c: ColorScheme) = {
-    // println("combos: " + c(groupId).combinations(2).toList)
     c(groupId).combinations(2).map { case Seq(a, b) => a distanceTo b }.toSeq
   }
 }

@@ -17,8 +17,11 @@ import Math._
 object PaletteView {
 
   case class Props(proxy: ModelProxy[RootModel]) {
-    def colors = proxy.value.colorScheme.colors
-    def groups = proxy.value.colorScheme.groups
+    def model = proxy.value
+    def scheme = model.colorScheme
+    def colors = model.colorScheme.colors
+    def groups = model.colorScheme.groups
+    def locked = model.locked
   }
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -33,11 +36,12 @@ object PaletteView {
               //   p.groups.keys.max + 1
               // ),
               <.td(
-                <.button(^.onClick --> p.proxy.dispatch(AddColor(p.groups.keys.max + 1, LCH(50, 50, 50))), "+")
+                <.button(^.onClick --> p.proxy.dispatch(AddColor(p.scheme.nextGroupId + 1, LCH(50, 50, 50))), "+")
               )
             ),
-            p.groups.map {
-              case (groupId, group) =>
+            p.groups.toSeq.map {
+              case (groupId, group) if group.size > 0 =>
+                println(group.size)
                 val avgLuminance = group.map(_.lab.luminance).sum / group.size
                 val avgChroma = group.map(_.lch.chroma).sum / group.size
                 val hues = group.map(_.lch.hue)
@@ -79,7 +83,18 @@ object PaletteView {
                         <.button(
                           ^.fontSize := "8px",
                           ^.onClick --> p.proxy.dispatch(RemoveColor(ColorIndex(groupId, i))), "remove"
+                        ),
+                        <.br(),
+                        if (p.locked(ColorIndex(groupId, i)))
+                          <.button(
+                          ^.fontSize := "6px",
+                          ^.onClick --> p.proxy.dispatch(RemoveLock(ColorIndex(groupId, i))), "unlock"
                         )
+                        else
+                          <.button(
+                            ^.fontSize := "6px",
+                            ^.onClick --> p.proxy.dispatch(SetLock(ColorIndex(groupId, i))), "lock"
+                          )
                       )
                   },
                   <.td(
