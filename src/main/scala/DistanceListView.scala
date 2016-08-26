@@ -45,9 +45,12 @@ object DistanceListView {
       )
     }
     def render(p: Props) = {
-      val groups = p.groups.values ++ p.groups.values.toSeq.combinations(2).map(_.flatten)
-      val groupPairs = groups.map { colors =>
-        val pairs = (for (i <- 0 until colors.size; j <- 0 until colors.size if i < j) yield { (colors(i), colors(j)) })
+      def pairs(xs: Seq[Color]): Seq[(Color, Color)] = (for (i <- xs.indices; j <- xs.indices if i < j) yield { (xs(i), xs(j)) })
+      def pairs2(xs: Seq[Color], ys: Seq[Color]): Seq[(Color, Color)] = (for (x <- xs; y <- ys) yield { (x, y) })
+
+      val intraGroupPairs: Seq[Seq[(Color, Color)]] = p.groups.values.toSeq map pairs
+      val interGroupPairs: Seq[Seq[(Color, Color)]] = p.groups.values.toSeq.combinations(2).toSeq.map { case Seq(xs, ys) => pairs2(xs, ys) }
+      val groupPairs = (intraGroupPairs ++ interGroupPairs).map { pairs =>
         val sorted = pairs.sortBy { case (a, b) => ColorDistance.ciede2000(a.lab, b.lab) }
         val limited = if (sorted.size <= 10) sorted else sorted.take(5) ++ sorted.takeRight(5)
         limited
