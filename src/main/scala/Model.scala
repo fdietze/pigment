@@ -3,12 +3,10 @@ package pigment
 import diode._
 import diode.react._
 
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._
-import scalax.collection.GraphEdge._
-
 import concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+
+import pharg._
 
 // Model
 case class RootModel(
@@ -27,8 +25,8 @@ case class ColorScheme(groups: collection.immutable.Map[Int, IndexedSeq[Color]] 
   lazy val colors = groups.values.flatten.toSeq
 
   private def vertices = colors
-  private def edges = vertices.combinations(2).map { case Seq(source, target) => DiEdge(source, target) }.toSeq
-  lazy val graph = Graph.from[Color, DiEdge](vertices, edges)
+  private def edges = vertices.combinations(2).map { case Seq(source, target) => Edge(source, target) }.toSeq
+  lazy val graph = DirectedGraph(vertices.toSet, edges.toSet)
 }
 
 case class ColorIndex(groupId: Int, index: Int)

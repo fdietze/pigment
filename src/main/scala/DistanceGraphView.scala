@@ -20,28 +20,26 @@ import diode.react._
 
 import scala.util.Try
 
-import scalax.collection.Graph
-import scalax.collection.GraphPredef._
-import scalax.collection.GraphEdge._
+import pharg._
 
 import fdietze.scalajs.react.components.D3ForceLayout
 
-object DistanceGraphView extends D3ForceLayout[Color, DiEdge] {
+object DistanceGraphView extends D3ForceLayout[Color, Edge[Color]] {
   val scale = 1.3
   val radius = 10.0
 
   override val reuseVertexCoordinatesOnUpdate = true
   override val panAndZoom = false
-  override def linkDistance(e: DiEdge[Color]) = ColorDistance.ciede2000(e.source.lab, e.target.lab) * scale
-  override def charge(v: Color) = 0
-  override def linkStrength(e: DiEdge[Color]) = 2
-  override def styleVertices(sel: VertexSelection) = {
-    super.styleVertices(sel)
+  override def linkDistance(p:Props, e: Edge[Color]) = ColorDistance.ciede2000(e.in.lab, e.out.lab) * scale
+  override def charge(p:Props, v: Color) = 0
+  override def linkStrength(p:Props, e: Edge[Color]) = 2
+  override def styleVertices(p:Props, sel: VertexSelection) = {
+    super.styleVertices(p, sel)
       .attr("r", radius)
       .style("fill", (d: D3Vertex) => d.v.toCSS)
   }
-  override def styleEdges(sel: EdgeSelection) = {
-    super.styleEdges(sel)
+  override def styleEdges(p:Props, sel: EdgeSelection) = {
+    super.styleEdges(p, sel)
       .style("stroke-dasharray", (d: D3Edge) => s"${radius * 2 - 2} 2")
       .style("stroke-dashoffset", (d: D3Edge) => s"${-2 - radius}")
   }
