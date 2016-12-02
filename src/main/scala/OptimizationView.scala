@@ -86,11 +86,11 @@ object OptimizationView {
 
     def stepGA(p: Props, steps: Int = 1) = {
       val best = ga.runFor(steps)
-      $.setState(State(Some(best))) >> p.proxy.dispatch(SetColorScheme(best))
+      $.setState(State(Some(best))) >> p.proxy.dispatchCB(SetColorScheme(best))
     }
 
     def renderGoal(p: Props, s: State, term: Statistics, i: Int) = {
-      import p.proxy.dispatch
+      import p.proxy.dispatchCB
 
       def goalToString(goal: Goal) = {
         goal match {
@@ -109,7 +109,7 @@ object OptimizationView {
       <.span(
         <.select(
           ^.value := goalToString(term.goal),
-          ^.onChange ==> ((e: ReactEventI) => dispatch(UpdateTerm(i, term.copy(goal = stringToGoal(e.target.value))))),
+          ^.onChange ==> ((e: ReactEventI) => dispatchCB(UpdateTerm(i, term.copy(goal = stringToGoal(e.target.value))))),
           List("Minimize", "Maximize").map { goal =>
             <.option(goal, ^.value := goal)
           }
@@ -118,7 +118,7 @@ object OptimizationView {
     }
 
     def renderMeasure(p: Props, s: State, term: Statistics, i: Int) = {
-      import p.proxy.dispatch
+      import p.proxy.dispatchCB
       def measureToString(measure: Measure) = {
         measure match {
           case Min => "Min"
@@ -137,7 +137,7 @@ object OptimizationView {
       }
       <.select(
         ^.value := measureToString(term.measure),
-        ^.onChange ==> ((selected: ReactEventI) => dispatch(UpdateTerm(i, term.copy(measure = stringToMeasure(selected.target.value))))),
+        ^.onChange ==> ((selected: ReactEventI) => dispatchCB(UpdateTerm(i, term.copy(measure = stringToMeasure(selected.target.value))))),
         List("Min", "Max", "Mean", "StdDev").map { measure =>
           <.option(measure, ^.value := measure)
         }
@@ -145,7 +145,7 @@ object OptimizationView {
     }
 
     def renderTarget(p: Props, s: State, term: Statistics, i: Int) = {
-      import p.proxy.dispatch
+      import p.proxy.dispatchCB
       val firstGroupId = p.colorScheme.groups.keys.headOption.getOrElse(0)
       val secondGroupId = p.colorScheme.groups.keys.drop(1).headOption.getOrElse(1)
       def targetToString(target: Target) = {
@@ -167,7 +167,7 @@ object OptimizationView {
       def groupSelector(selected: Int, action: (Int) => Action) = {
         <.select(
           ^.value := selected,
-          ^.onChange ==> ((selected: ReactEventI) => dispatch(action(selected.target.value.toInt))),
+          ^.onChange ==> ((selected: ReactEventI) => dispatchCB(action(selected.target.value.toInt))),
           p.colorScheme.groups.keys.toSeq.map { g =>
             <.option(g.toString, ^.value := g.toString)
           }
@@ -176,7 +176,7 @@ object OptimizationView {
       <.span(
         <.select(
           ^.value := targetToString(term.target),
-          ^.onChange ==> ((selected: ReactEventI) => dispatch(UpdateTerm(i, term.copy(target = stringToTarget(selected.target.value))))),
+          ^.onChange ==> ((selected: ReactEventI) => dispatchCB(UpdateTerm(i, term.copy(target = stringToTarget(selected.target.value))))),
           List("Chroma", "Luminance", "IntraGroupDistance", "InterGroupDistance").map { target =>
             <.option(target, ^.value := target)
           }
@@ -195,7 +195,7 @@ object OptimizationView {
 
     //TODO: make dry
     def renderTarget(p: Props, s: State, term: Approximation, i: Int) = {
-      import p.proxy.dispatch
+      import p.proxy.dispatchCB
       val firstGroupId = p.colorScheme.groups.keys.headOption.getOrElse(0)
       val secondGroupId = p.colorScheme.groups.keys.drop(1).headOption.getOrElse(1)
       def targetToString(target: Target) = {
@@ -217,7 +217,7 @@ object OptimizationView {
       def groupSelector(selected: Int, action: (Int) => Action) = {
         <.select(
           ^.value := selected,
-          ^.onChange ==> ((selected: ReactEventI) => dispatch(action(selected.target.value.toInt))),
+          ^.onChange ==> ((selected: ReactEventI) => dispatchCB(action(selected.target.value.toInt))),
           p.colorScheme.groups.keys.toSeq.map { g =>
             <.option(g.toString, ^.value := g.toString)
           }
@@ -226,7 +226,7 @@ object OptimizationView {
       <.span(
         <.select(
           ^.value := targetToString(term.target),
-          ^.onChange ==> ((selected: ReactEventI) => dispatch(UpdateTerm(i, term.copy(target = stringToTarget(selected.target.value))))),
+          ^.onChange ==> ((selected: ReactEventI) => dispatchCB(UpdateTerm(i, term.copy(target = stringToTarget(selected.target.value))))),
           List("Chroma", "Luminance", "IntraGroupDistance", "InterGroupDistance").map { target =>
             <.option(target, ^.value := target)
           }
@@ -244,13 +244,13 @@ object OptimizationView {
     }
 
     def render(p: Props, s: State) = {
-      import p.proxy.dispatch
+      import p.proxy.dispatchCB
       val firstGroupId = p.colorScheme.groups.keys.headOption.getOrElse(0)
       <.div(
         p.fitnessFunction.terms.zipWithIndex.map {
           case (term, i) =>
             <.div(
-              <.button("-", ^.onClick --> dispatch(RemoveTerm(i))),
+              <.button("-", ^.onClick --> dispatchCB(RemoveTerm(i))),
               term match {
                 case term: Statistics =>
                   <.span(
@@ -263,7 +263,7 @@ object OptimizationView {
                     "Approximate",
                     renderTarget(p, s, term, i),
                     <.input(^.`type` := "number", ^.value := term.targetValue, ^.width := "3em",
-                      ^.onChange ==> ((e: ReactEventI) => dispatch(UpdateTerm(i, term.copy(targetValue = e.target.value.toDouble)))))
+                      ^.onChange ==> ((e: ReactEventI) => dispatchCB(UpdateTerm(i, term.copy(targetValue = e.target.value.toDouble)))))
                   )
 
               },
@@ -273,8 +273,8 @@ object OptimizationView {
               " ", "%.0f" format term.result(p.colorScheme, StdDev)
             )
         },
-        <.button("+S", ^.onClick --> dispatch(AddTerm(Statistics(Maximize, Min, Chroma(firstGroupId))))),
-        <.button("+A", ^.onClick --> dispatch(AddTerm(Approximation(Chroma(firstGroupId), 70)))),
+        <.button("+S", ^.onClick --> dispatchCB(AddTerm(Statistics(Maximize, Min, Chroma(firstGroupId))))),
+        <.button("+A", ^.onClick --> dispatchCB(AddTerm(Approximation(Chroma(firstGroupId), 70)))),
         "%.0f" format p.fitnessFunction(p.colorScheme),
         <.br(),
         <.button(^.onClick --> stepGA(p), "step"),

@@ -9,6 +9,8 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import diode._
 import diode.react._
 
+import vectory._
+
 object Main extends js.JSApp {
   def main {
     // ColorDistance.tests()
@@ -34,10 +36,13 @@ object Main extends js.JSApp {
           ^.display := "flex",
           ^.flex := "1 1 auto",
           ^.flexWrap := "wrap",
-          modelConnect(g => DistanceGraphView(g.value.colorScheme.graph, 200, 200, None)),
+          <.div(
+            ^.width := 200,
+            ^.height := 200,
+            modelConnect(g => DistanceGraphView(g.value.colorScheme.graph, Vec2(200, 200), None))),
           DistanceListView(m),
-          MatrixView(m),
-          OptimizationView(m)
+          MatrixView(m)
+          // OptimizationView(m)
         )
       )
     }

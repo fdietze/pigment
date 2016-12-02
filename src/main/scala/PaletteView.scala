@@ -36,7 +36,7 @@ object PaletteView {
               //   p.groups.keys.max + 1
               // ),
               <.td(
-                <.button(^.onClick --> p.proxy.dispatch(AddColor(p.scheme.nextGroupId + 1, LCH(50, 50, 50))), "+")
+                <.button(^.onClick --> p.proxy.dispatchCB(AddColor(p.scheme.nextGroupId + 1, LCH(50, 50, 50))), "+")
               )
             ),
             p.groups.toSeq.map {
@@ -82,24 +82,24 @@ object PaletteView {
                         ),
                         <.button(
                           ^.fontSize := "8px",
-                          ^.onClick --> p.proxy.dispatch(RemoveColor(ColorIndex(groupId, i))), "remove"
+                          ^.onClick --> p.proxy.dispatchCB(RemoveColor(ColorIndex(groupId, i))), "remove"
                         ),
                         <.br(),
                         if (p.locked(ColorIndex(groupId, i)))
                           <.button(
                           ^.fontSize := "6px",
-                          ^.onClick --> p.proxy.dispatch(RemoveLock(ColorIndex(groupId, i))), "unlock"
+                          ^.onClick --> p.proxy.dispatchCB(RemoveLock(ColorIndex(groupId, i))), "unlock"
                         )
                         else
                           <.button(
                             ^.fontSize := "6px",
-                            ^.onClick --> p.proxy.dispatch(SetLock(ColorIndex(groupId, i))), "lock"
+                            ^.onClick --> p.proxy.dispatchCB(SetLock(ColorIndex(groupId, i))), "lock"
                           )
                       )
                   },
                   <.td(
                     ^.verticalAlign := "top",
-                    <.button(^.onClick --> p.proxy.dispatch(AddColor(groupId, LCH(avgLuminance, avgChroma, freeHue))), "+")
+                    <.button(^.onClick --> p.proxy.dispatchCB(AddColor(groupId, LCH(avgLuminance, avgChroma, freeHue))), "+")
                   )
                 )
             }
