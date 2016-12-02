@@ -30,7 +30,7 @@ object DistanceGraphView extends D3ForceLayout[Color, Edge[Color]] {
 
   override val reuseVertexCoordinatesOnUpdate = true
   override val panAndZoom = false
-  override def linkDistance(p:Props, e: Edge[Color]) = ColorDistance.ciede2000(e.in.lab, e.out.lab) * scale
+  override def linkDistance(p:Props, e: Edge[Color]) = ColorDistance.ciede2000(e.in.lab, e.out.lab) * scale //TODO: .rgb.lab to get perceived distance between rgb values
   override def charge(p:Props, v: Color) = 0
   override def linkStrength(p:Props, e: Edge[Color]) = 2
   override def styleVertices(p:Props, sel: VertexSelection) = {
