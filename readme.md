@@ -1,5 +1,5 @@
 # Pigment
-[Online Demo](https://ipfs.io/ipfs/QmPsP6p8XSZ5TsqpeP3t4nXYKYBG4xhQ4ZfBkjSYGFQs59)
+[Online Demo](https://fdietze.github.io/pigment)
 
 ![demo](demo.gif)
 
@@ -9,8 +9,3 @@ Die klassischen Farbwähler basieren auf dem RGB/HSV-Farbmodell und erlauben mei
 **Pigment** lässt den Benutzer mit mehreren Farben gleichzeitig im Lab/Lch Farbmodell arbeiten und stellt die Wahrgenommenen Farbdistanzen nach CIEDE2000 in echtzeit grafisch dar.
 
 Geplant sind weitere Visualisierungen der Farbpalette und die integration von Optimierungs-Algorithmen um beliebige Farb-Eigenschaften in einer Palette zu optimieren.
-
-# Latest Demo
-Find the link to the latest version under [releases/master-ipfs](https://github.com/fdietze/pigment/releases/tag/master-ipfs).
-
-The demo is deployed via [IPFS](https://ipfs.io).
