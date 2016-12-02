@@ -50,20 +50,9 @@ object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
   def initialModel = RootModel(
     ColorScheme(Map[Int, IndexedSeq[Color]](
       0 -> Array(
-        LAB(15, -12, -12),
-        LAB(20, -12, -12),
-        LAB(92, -0, 10),
-        LAB(97, 0, 10)
-      ),
-      1 -> Array(
-        LAB(60, 10, 65),
-        LAB(50, 50, 55),
-        LAB(50, 65, 45),
-        LAB(50, 65, -5),
-        LAB(50, 15, -45),
-        LAB(55, -10, -45),
-        LAB(60, -35, -5),
-        LAB(60, -20, 65)
+        LAB(63, 58, 38),
+        LAB(18, 40, -55),
+        LAB(59, -54, 54)
       )
     ).withDefaultValue(IndexedSeq.empty)),
     locked = Set(ColorIndex(0, 0), ColorIndex(0, 1), ColorIndex(0, 2), ColorIndex(0, 3)),
