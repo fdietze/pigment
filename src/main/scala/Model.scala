@@ -35,9 +35,12 @@ case class ColorScheme(groups: collection.immutable.Map[Int, IndexedSeq[Color]] 
 case class ColorIndex(groupId: Int, index: Int)
 
 // Actions
+trait LiveAction extends Action // does not trigger ExportHash or Undo
+
 case class SetColorScheme(colorScheme: ColorScheme) extends Action
 
 case class AddColor(group: Int, color: Color) extends Action
+case class LiveUpdateColor(colorIndex: ColorIndex, color: Color) extends LiveAction
 case class UpdateColor(colorIndex: ColorIndex, color: Color) extends Action
 case class RemoveColor(colorIndex: ColorIndex) extends Action
 
@@ -48,7 +51,7 @@ case class AddTerm(term: Term) extends Action
 case class UpdateTerm(index: Int, term: Term) extends Action
 case class RemoveTerm(index: Int) extends Action
 
-// case object ExportHash extends Action
+case object ExportHash extends Action
 case object ImportHash extends Action
 
 // Circuit
@@ -60,6 +63,7 @@ object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
       case SetColorScheme(scheme) => updated(scheme.groups)
       case AddColor(group, color) => updated(value.updated(group, value(group) :+ color))
       case UpdateColor(ColorIndex(group, index), color) => updated(value.updated(group, value(group).updated(index, color)))
+      case LiveUpdateColor(ColorIndex(group, index), color) => updated(value.updated(group, value(group).updated(index, color)))
       case RemoveColor(i @ ColorIndex(group, index)) =>
         //TODO: bug: locks are shifted after removal
         val without = value.updated(group, (value(group).take(index) ++ value(group).drop(index + 1)))
@@ -93,31 +97,43 @@ object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
 }
 
 class ExportProcessor extends ActionProcessor[RootModel] {
-  // val dispatchImport: js.Function1[Event, Unit] = { e: Event => AppCircuit.dispatch(ImportHash) }
-  // window.addEventListener("hashchange", dispatchImport, false)
+  window.addEventListener(
+    "hashchange",
+    (e: Event) => AppCircuit.dispatch(ImportHash)
+  )
 
   def process(dispatch: diode.Dispatcher, action: Any, next: Any => diode.ActionResult[RootModel], currentModel: RootModel): ActionResult[RootModel] = {
     action match {
       case ImportHash =>
-        println("importing from hash...")
+        // println("importing from hash...")
         export.fromJson(window.location.hash.tail).map { newModel =>
-          println("importing from hash successful.")
+          // println("importing from hash successful.")
           ActionResult.ModelUpdate(newModel)
         } getOrElse
           ActionResult.NoChange
-      case _ =>
 
-        //TODO: call after action, not before action / or provide separate ExportHash action, because of performance reasons
-        import scala.scalajs.js
-        import org.scalajs.dom._
+      case ExportHash =>
         // println("exporting to hash.")
         val encoded = export.toJson(currentModel)
         val hash = s"#$encoded"
-        // window.history.pushState(null, null, hash)
-        window.location.hash = hash //TODO: don't trigger hashchange event
+
+        // history.pushState
+        // this does not trigger the event "hashchang"
+        // and as a nice byproduct makes the back-button an undo-button.
+        window.history.pushState(null, null, hash)
+        // window.location.hash = hash
+
+        ActionResult.NoChange
+
+      case a: LiveAction =>
+        next(a)
+
+      case a: Action =>
+        // Every model update triggers ExportHash
+        AppCircuit.dispatch(ExportHash)
 
         // call the next processor
-        next(action)
+        next(a)
     }
   }
 }

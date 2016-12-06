@@ -55,7 +55,7 @@ object ChromaView extends ColorCanvasView {
           val col = groups(groupId)(i)
           val newCol = col.lab.copy(l = (col.lab.luminance - deltaY / 10.0).max(0).min(100))
           val newState = s.copy(luminance = newCol.luminance)
-          proxy.dispatchCB(UpdateColor(ColorIndex(groupId, i), newCol)) >> $.setState(newState) >> drawBackground(newState)
+          proxy.dispatchCB(LiveUpdateColor(ColorIndex(groupId, i), newCol)) >> $.setState(newState) >> drawBackground(newState)
 
         case None =>
           val newState = s.copy(hueShift = (hueShift + deltaY / 100.0) % (PI * 2))
@@ -83,7 +83,7 @@ object ChromaView extends ColorCanvasView {
       val newCol = colorAt(x, y, s)
       val newState = s.copy(dragState = s.dragState.copy(dragging = Some((groupId, i, newCol))))
       $.setState(newState) >>
-        p.proxy.dispatchCB(UpdateColor(ColorIndex(groupId, i), newCol)) >>
+        p.proxy.dispatchCB(LiveUpdateColor(ColorIndex(groupId, i), newCol)) >>
         drawForeground(p, s)
     }
 

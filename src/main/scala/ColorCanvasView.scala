@@ -167,7 +167,15 @@ trait ColorCanvasView {
     }
 
     def handleMouseUp(p: Props)(e: ReactMouseEventH) = $.state.flatMap { s =>
-      $.modState(_.withDragState(s.dragState.copy(dragging = None)))
+      val updateCBOpt = s.dragState.dragging.map { draggable =>
+        val (groupId, i, color) = draggable
+        p.proxy.dispatchCB(UpdateColor(ColorIndex(groupId, i), color))
+      }
+      val clearDragstateCB = $.modState(_.withDragState(s.dragState.copy(dragging = None)))
+      updateCBOpt match {
+        case Some(updateCB) => updateCB >> clearDragstateCB
+        case None => clearDragstateCB
+      }
     }
 
     val widthAttr = "width".reactAttr
