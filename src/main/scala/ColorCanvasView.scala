@@ -99,7 +99,7 @@ trait ColorCanvasView {
         data(i + 3) = 255
       }
       val duration = System.nanoTime - start
-      println(s"${duration}ns")
+      println(s"${duration / 1000000}ms")
       ctx.putImageData(imageData, 0, 0)
     }
 
