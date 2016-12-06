@@ -4,13 +4,17 @@ name := "pigment"
 
 scalaVersion := "2.12.1"
 
+val circeVersion = "0.6.1"
 libraryDependencies ++= (
   "com.github.fdietze" %%% "pharg" % "0.1.0-SNAPSHOT" ::
   "com.github.fdietze" %%% "vectory" % "0.1.0-SNAPSHOT" ::
   "com.github.japgolly.scalajs-react" %%% "core" % "0.11.3" ::
   "me.chrons" %%% "diode" % "1.1.0" ::
   "me.chrons" %%% "diode-react" % "1.1.0" ::
-  "me.chrons" %%% "boopickle" % "1.2.5" ::
+  // "me.chrons" %%% "boopickle" % "1.2.5" ::
+  "io.circe" %%% "circe-core" % circeVersion ::
+  "io.circe" %%% "circe-generic" % circeVersion ::
+  "io.circe" %%% "circe-parser" % circeVersion ::
   "com.github.fdietze" %%% "scalajs-react-d3-force-layout" % "0.1.0-SNAPSHOT" ::
   Nil
 )

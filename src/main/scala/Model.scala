@@ -6,6 +6,9 @@ import diode.react._
 import concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.scalajs.js
+import org.scalajs.dom._
+
 import pharg._
 
 // Model
@@ -45,22 +48,12 @@ case class AddTerm(term: Term) extends Action
 case class UpdateTerm(index: Int, term: Term) extends Action
 case class RemoveTerm(index: Int) extends Action
 
+// case object ExportHash extends Action
+case object ImportHash extends Action
+
 // Circuit
 object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
-  def initialModel = RootModel(
-    ColorScheme(Map[Int, IndexedSeq[Color]](
-      0 -> Array(
-        LAB(63, 58, 38),
-        LAB(18, 40, -55),
-        LAB(59, -54, 54)
-      )
-    ).withDefaultValue(IndexedSeq.empty)),
-    locked = Set(ColorIndex(0, 0), ColorIndex(0, 1), ColorIndex(0, 2), ColorIndex(0, 3)),
-    FitnessFunction(List(
-      Approximation(InterGroupDistance(0, 1), 40),
-      Statistics(Maximize, Min, IntraGroupDistance(1), List())
-    ))
-  )
+  def initialModel = RootModel()
 
   val colorSchemeHandler = new ActionHandler(zoomRW(_.colorScheme.groups)((m, v) => m.copy(colorScheme = m.colorScheme.copy(groups = v)))) {
     override def handle = {
@@ -97,4 +90,34 @@ object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
   }
 
   override val actionHandler = composeHandlers(colorSchemeHandler, fitnessFunctionHandler, lockHandler)
+}
+
+class ExportProcessor extends ActionProcessor[RootModel] {
+  // val dispatchImport: js.Function1[Event, Unit] = { e: Event => AppCircuit.dispatch(ImportHash) }
+  // window.addEventListener("hashchange", dispatchImport, false)
+
+  def process(dispatch: diode.Dispatcher, action: Any, next: Any => diode.ActionResult[RootModel], currentModel: RootModel): ActionResult[RootModel] = {
+    action match {
+      case ImportHash =>
+        println("importing from hash...")
+        export.fromJson(window.location.hash.tail).map { newModel =>
+          println("importing from hash successful.")
+          ActionResult.ModelUpdate(newModel)
+        } getOrElse
+          ActionResult.NoChange
+      case _ =>
+
+        //TODO: call after action, not before action / or provide separate ExportHash action, because of performance reasons
+        import scala.scalajs.js
+        import org.scalajs.dom._
+        // println("exporting to hash.")
+        val encoded = export.toJson(currentModel)
+        val hash = s"#$encoded"
+        // window.history.pushState(null, null, hash)
+        window.location.hash = hash //TODO: don't trigger hashchange event
+
+        // call the next processor
+        next(action)
+    }
+  }
 }

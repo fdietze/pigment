@@ -11,24 +11,14 @@ import diode.react._
 
 import vectory._
 
-class SaveProcessor extends ActionProcessor[RootModel] {
-  def process(dispatch: diode.Dispatcher, action: Any, next: Any => diode.ActionResult[RootModel], currentModel: RootModel): ActionResult[RootModel] = {
-    val encoded = export.toBase64(currentModel)
-    window.location.hash = s"#$encoded"
-
-    // call the next processor
-    next(action)
-  }
-}
-
 object Main extends js.JSApp {
   def main {
     // ColorDistance.tests()
     val mainView = AppCircuit.connect(m => m)
     ReactDOM.render(mainView(m => MainView(m)), document.getElementById("container"))
 
-    val saveProcessor = new SaveProcessor
-    AppCircuit.addProcessor(saveProcessor)
+    AppCircuit.addProcessor(new ExportProcessor)
+    if (window.location.hash.nonEmpty) { AppCircuit.dispatch(ImportHash) }
   }
 
   val modelConnect = AppCircuit.connect(m => m)
