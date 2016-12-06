@@ -41,7 +41,6 @@ object PaletteView {
             ),
             p.groups.toSeq.map {
               case (groupId, group) if group.size > 0 =>
-                println(group.size)
                 val avgLuminance = group.map(_.lab.luminance).sum / group.size
                 val avgChroma = group.map(_.lch.chroma).sum / group.size
                 val hues = group.map(_.lch.hue)
@@ -83,18 +82,18 @@ object PaletteView {
                         <.button(
                           ^.fontSize := "8px",
                           ^.onClick --> p.proxy.dispatchCB(RemoveColor(ColorIndex(groupId, i))), "remove"
-                        ),
-                        <.br(),
-                        if (p.locked(ColorIndex(groupId, i)))
-                          <.button(
-                          ^.fontSize := "6px",
-                          ^.onClick --> p.proxy.dispatchCB(RemoveLock(ColorIndex(groupId, i))), "unlock"
                         )
-                        else
-                          <.button(
-                            ^.fontSize := "6px",
-                            ^.onClick --> p.proxy.dispatchCB(SetLock(ColorIndex(groupId, i))), "lock"
-                          )
+                      // <.br(),
+                      // if (p.locked(ColorIndex(groupId, i)))
+                      //   <.button(
+                      //   ^.fontSize := "6px",
+                      //   ^.onClick --> p.proxy.dispatchCB(RemoveLock(ColorIndex(groupId, i))), "unlock"
+                      // )
+                      // else
+                      //   <.button(
+                      //     ^.fontSize := "6px",
+                      //     ^.onClick --> p.proxy.dispatchCB(SetLock(ColorIndex(groupId, i))), "lock"
+                      //   )
                       )
                   },
                   <.td(
