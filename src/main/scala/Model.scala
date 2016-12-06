@@ -20,15 +20,20 @@ case class RootModel(
 
 //TODO: how to provide factory for case class? to retain case class features, like extractors, equals, ...
 // report as scala-bug?
-case class ColorScheme(groups: collection.immutable.Map[Int, IndexedSeq[Color]] = Map.empty.withDefaultValue(IndexedSeq.empty)) {
-  def apply(i: Int) = groups.getOrElse(i, Nil)
-  def apply(i: ColorIndex) = groups(i.groupId)(i.index)
+case class ColorScheme(groups: collection.immutable.Map[Int, IndexedSeq[Color]] = Map.empty) {
+  def apply(groupId: Int): IndexedSeq[Color] = groups.getOrElse(groupId, IndexedSeq.empty)
+  def updated(groupId: Int, f: IndexedSeq[Color] => IndexedSeq[Color]): ColorScheme = copy(groups.updated(groupId, f(apply(groupId))))
+
+  def apply(i: ColorIndex): Color = groups(i.groupId)(i.index)
+  def updated(i: ColorIndex, color: Color): ColorScheme = updated(i.groupId, (g: IndexedSeq[Color]) => g.updated(i.index, color))
+
   def nextGroupId = if (groups.isEmpty) 0 else (groups.keys.max + 1)
+
   lazy val indices: Seq[ColorIndex] = groups.keys.toSeq.flatMap(groupId => groups(groupId).indices.map(i => ColorIndex(groupId, i)))
   lazy val colors = groups.values.flatten.toSeq
 
-  private def vertices = colors
-  private def edges = vertices.combinations(2).map { case Seq(source, target) => Edge(source, target) }.toSeq
+  private def vertices = colors.distinct
+  private def edges = vertices.combinations(2).map { case Seq(source, target) => Edge(source, target) }
   lazy val graph = DirectedGraph(vertices.toSet, edges.toSet)
 }
 
@@ -58,16 +63,16 @@ case object ImportHash extends Action
 object AppCircuit extends Circuit[RootModel] with ReactConnector[RootModel] {
   def initialModel = RootModel()
 
-  val colorSchemeHandler = new ActionHandler(zoomRW(_.colorScheme.groups)((m, v) => m.copy(colorScheme = m.colorScheme.copy(groups = v)))) {
+  val colorSchemeHandler = new ActionHandler(zoomRW(_.colorScheme)((m, v) => m.copy(colorScheme = v))) {
     override def handle = {
-      case SetColorScheme(scheme) => updated(scheme.groups)
-      case AddColor(group, color) => updated(value.updated(group, value(group) :+ color))
-      case UpdateColor(ColorIndex(group, index), color) => updated(value.updated(group, value(group).updated(index, color)))
-      case LiveUpdateColor(ColorIndex(group, index), color) => updated(value.updated(group, value(group).updated(index, color)))
-      case RemoveColor(i @ ColorIndex(group, index)) =>
+      case SetColorScheme(scheme) => updated(scheme)
+      case AddColor(groupId, color) => updated(value.updated(groupId, _ :+ color))
+      case UpdateColor(cindex, color) => updated(value.updated(cindex, color))
+      case LiveUpdateColor(cindex, color) => updated(value.updated(cindex, color))
+      case RemoveColor(i @ ColorIndex(groupId, index)) =>
         //TODO: bug: locks are shifted after removal
-        val without = value.updated(group, (value(group).take(index) ++ value(group).drop(index + 1)))
-        val withoutEmpty = without.filterNot(_._2.isEmpty)
+        val without = value.updated(groupId, g => (g.take(index) ++ g.drop(index + 1)))
+        val withoutEmpty = ColorScheme(without.groups.filterNot(_._2.isEmpty))
         updated(
           withoutEmpty,
           Effect(Future.successful(RemoveLock(i)))

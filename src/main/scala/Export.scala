@@ -44,7 +44,6 @@ package object export {
   def fromJson(json: String): Either[io.circe.Error, RootModel] = {
     import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
-    //TODO: create Map with defaultvalue in colorscheme
     decode[RootModel](json)
   }
 }
