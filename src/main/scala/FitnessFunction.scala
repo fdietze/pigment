@@ -6,7 +6,7 @@ case class FitnessFunction(terms: Seq[Term] = Nil) {
   def apply(c: ColorScheme) = terms.map(term => term(c)).sum
 }
 
-trait Term {
+sealed trait Term {
   def apply(c: ColorScheme): Double
   def target: Target
   def result(c: ColorScheme, measure: Measure) = {
