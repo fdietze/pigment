@@ -1,5 +1,8 @@
 package pigment
 
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import cats.syntax.either._
+
 package object export {
   // def toBase64(model: RootModel): String = {
   //   import scala.scalajs.js
@@ -35,15 +38,25 @@ package object export {
   //   window.btoa(s.result)
   // }
 
+  implicit val encodeColor: Encoder[Color] = Encoder.encodeList[Double].contramap[Color] { c =>
+    val lch = c.lch
+    List(lch.l, lch.c, lch.h).map(x => math.round(100 * x) / 100.0)
+  }
+  implicit val decodeColor: Decoder[Color] = Decoder.decodeList[Double].emap { list =>
+    Either.catchNonFatal(LCH(list(0), list(1), list(2))).leftMap(t => "LCH")
+  }
+
+  implicit val encodeColorScheme: Encoder[ColorScheme] = Encoder.encodeMapLike[Map, Int, IndexedSeq[Color]].contramap[ColorScheme](_.groups)
+  implicit val decodeColorScheme: Decoder[ColorScheme] = Decoder.decodeMapLike[Map, Int, IndexedSeq[Color]].emap { groups =>
+    Either.catchNonFatal(ColorScheme(groups)).leftMap(t => "ColorScheme")
+  }
+
   def toJson(model: RootModel): String = {
-    import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
     model.asJson.noSpaces
   }
 
   def fromJson(json: String): Either[io.circe.Error, RootModel] = {
-    import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
-
     decode[RootModel](json)
   }
 }
