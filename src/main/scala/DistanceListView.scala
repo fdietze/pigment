@@ -51,7 +51,7 @@ object DistanceListView {
       val intraGroupPairs: Seq[Seq[(Color, Color)]] = p.groups.values.toSeq map pairs
       val interGroupPairs: Seq[Seq[(Color, Color)]] = p.groups.values.toSeq.combinations(2).toSeq.map { case Seq(xs, ys) => pairs2(xs, ys) }
       val groupPairs = (intraGroupPairs ++ interGroupPairs).map { pairs =>
-        val sorted = pairs.sortBy { case (a, b) => ColorDistance.ciede2000(a.lab, b.lab) }
+        val sorted = pairs.sortBy { case (a, b) => ColorDistance.ciede2000(a.rgb.lab, b.rgb.lab) }
         val limited = if (sorted.size <= 10) sorted else sorted.take(5) ++ sorted.takeRight(5)
         limited
       }

@@ -59,11 +59,11 @@ object PaletteView {
                       val rgb = col.rgb
                       <.td(
                         ^.textAlign := "center",
-                        <.div(^.width := "50px", ^.height := "50px",
+                        <.div(^.width := "60px", ^.height := "60px",
                           ^.backgroundColor := col.toCSS),
                         <.pre(
                           ^.fontFamily := "monospace",
-                          ^.fontSize := "8px",
+                          ^.fontSize := "7px",
                           ^.margin := "0px",
                           "%3d,%3d,%3d" format (col.lab.l.toInt, col.lab.a.toInt, col.lab.b.toInt)
                         ),
@@ -71,16 +71,10 @@ object PaletteView {
                           ^.fontFamily := "monospace",
                           ^.fontSize := "8px",
                           ^.margin := "0px",
-                          s"#${rgb.toHEX}"
-                        ),
-                        <.pre(
-                          ^.fontFamily := "monospace",
-                          ^.fontSize := "8px",
-                          ^.margin := "0px",
-                          "%3d,%3d,%3d" format (rgb.r, rgb.g, rgb.b)
+                          s"#${rgb.toHex}"
                         ),
                         <.button(
-                          ^.fontSize := "8px",
+                          ^.fontSize := "7px",
                           ^.onClick --> p.proxy.dispatchCB(RemoveColor(ColorIndex(groupId, i))), "remove"
                         )
                       // <.br(),
