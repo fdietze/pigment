@@ -11,7 +11,7 @@ libraryDependencies ++= (
   "com.github.japgolly.scalajs-react" %%% "core" % "0.11.3" ::
   "me.chrons" %%% "diode" % "1.1.0" ::
   "me.chrons" %%% "diode-react" % "1.1.0" ::
-  // "me.chrons" %%% "boopickle" % "1.2.5" ::
+  "me.chrons" %%% "boopickle" % "1.2.5" ::
   "io.circe" %%% "circe-core" % circeVersion ::
   "io.circe" %%% "circe-generic" % circeVersion ::
   "io.circe" %%% "circe-parser" % circeVersion ::
