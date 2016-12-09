@@ -4,13 +4,14 @@ OUT="out"
 
 ./buildproduction.sh
 
-DIRHASH=$(ipfs add -r $OUT | tail -1 | cut -d " " -f2)
-# ipfs name publish /ipfs/$DIRHASH
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-URL="https://ipfs.io/ipfs/$DIRHASH"
-echo $URL
-
-ssh neptun ipfs pin add /ipfs/$DIRHASH
-git tag master-ipfs -f -m "$URL"
-git push --tags --force
-
+git stash
+git checkout gh-pages
+mv $OUT/* .
+rm -r $OUT
+git add *.html *.js
+git commit --amend --no-edit
+git push --force
+git checkout $BRANCH
+git stash pop
