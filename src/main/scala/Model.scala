@@ -8,6 +8,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.scalajs.js
 import org.scalajs.dom._
+import js.Dynamic.{global => g}
 
 import pharg._
 
@@ -111,7 +112,8 @@ class ExportProcessor extends ActionProcessor[RootModel] {
     action match {
       case ImportHash =>
         // println("importing from hash...")
-        export.fromJson(window.location.hash.tail).map { newModel =>
+        val encoded = g.decodeURIComponent(window.location.hash.tail).asInstanceOf[String]
+        export.fromBase64(encoded).map { newModel =>
           // println("importing from hash successful.")
           ActionResult.ModelUpdate(newModel)
         } getOrElse
@@ -119,8 +121,8 @@ class ExportProcessor extends ActionProcessor[RootModel] {
 
       case ExportHash =>
         // println("exporting to hash.")
-        val encoded = export.toJson(currentModel)
-        val hash = s"#$encoded"
+        val encoded = export.toBase64(currentModel)
+        val hash = s"#${g.encodeURIComponent(encoded).asInstanceOf[String]}"
 
         // history.pushState
         // this does not trigger the event "hashchang"
