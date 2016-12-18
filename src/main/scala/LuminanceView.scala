@@ -83,7 +83,7 @@ object LuminanceView extends ColorCanvasView {
       val newCol = colorAt(x, y, s)
       val newState = s.copy(dragState = s.dragState.copy(dragging = Some((groupId, i, newCol))))
       $.setState(newState) >>
-        p.proxy.dispatchCB(LiveUpdateColor(ColorIndex(groupId, i), newCol)) >>
+        p.proxy.dispatchCB(UpdateColor(ColorIndex(groupId, i), newCol)) >>
         drawForeground(p, s)
     }
 

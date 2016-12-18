@@ -94,7 +94,7 @@ object ChromaCircleView extends ColorCanvasView {
           val col = groups(groupId)(i)
           val newCol = col.lab.copy(l = (col.lab.l - deltaY / 10.0).max(0).min(100))
           val newState = s.copy(luminance = newCol.l)
-          proxy.dispatchCB(LiveUpdateColor(ColorIndex(groupId, i), newCol)) >> $.setState(newState) >> drawBackground(newState)
+          proxy.dispatchCB(UpdateColor(ColorIndex(groupId, i), newCol)) >> $.setState(newState) >> drawBackground(newState)
 
         case None =>
           val newState = s.copy(chroma = (chroma + deltaY / 10.0).max(0).min(128))
