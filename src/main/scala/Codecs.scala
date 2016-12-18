@@ -1,26 +1,22 @@
 package pigment
 
-// import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 import cats.syntax.either._
 
 import scala.scalajs.js
-import js.Dynamic.{global => g}
-
-import scala.scalajs.js
 import org.scalajs.dom._
-import js.typedarray._
-import js.typedarray.TypedArrayBufferOps._
-import js.Dynamic.global
-import java.nio.ByteBuffer
-import boopickle.Default._
+import js.Dynamic.{global => g}
 import window._
 
+import java.nio.ByteBuffer
+
 trait ModelCodec[T] {
-  def decode(data: T): Option[RootModel] = ???
   def encode(model: RootModel): T = ???
+  def decode(data: T): Option[RootModel] = ???
 }
 
-package object export {
+object BooPickleCodec extends ModelCodec[ByteBuffer] {
+  import boopickle.Default._
+
   // explicitly store colors in LCH (polar coordinates in LAB)
   // (to not lose hue value) and store them as floats to save space
   implicit val colorPickler: Pickler[Color] = transformPickler { (a: Array[Float]) =>
@@ -32,24 +28,32 @@ package object export {
     Array(enc(lch.l), enc(lch.c), enc(lch.h))
   }
 
-  def toBase64(model: RootModel): String = {
-    val buffer = Pickle.intoBytes(model)
+  override def encode(model: RootModel) = Pickle.intoBytes(model)
+  override def decode(data: ByteBuffer) = Some(Unpickle[RootModel].fromBytes(data))
+}
+
+object Base64Codec extends ModelCodec[String] {
+  override def encode(model: RootModel) = {
+    val buffer = BooPickleCodec.encode(model)
     val s = new StringBuilder(buffer.limit)
     for (i <- 0 until buffer.limit) {
       val c = buffer.get
-      s ++= global.String.fromCharCode(c & 0xFF).asInstanceOf[String]
+      s ++= g.String.fromCharCode(c & 0xFF).asInstanceOf[String]
     }
 
     btoa(s.result)
   }
-
-  def fromBase64(base64: String): Option[RootModel] = {
-    val byteString = atob(base64)
+  override def decode(data: String): Option[RootModel] = {
+    val byteString = atob(data)
     val buffer = ByteBuffer.allocateDirect(byteString.size)
     byteString.foreach(c => buffer.put(c.toByte))
     buffer.flip()
-    Some(Unpickle[RootModel].fromBytes(buffer))
+    BooPickleCodec.decode(buffer)
   }
+}
+
+object JsonCodec extends ModelCodec[String] {
+  import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
   implicit val encodeColor: Encoder[Color] = Encoder.encodeList[Double].contramap[Color] { c =>
     val lch = c.lch
@@ -64,28 +68,11 @@ package object export {
     Either.catchNonFatal(ColorScheme(groups)).leftMap(t => "ColorScheme")
   }
 
-  def toJson(model: RootModel): String = {
+  override def encode(model: RootModel): String = {
     g.encodeURIComponent(model.asJson.noSpaces).asInstanceOf[String]
   }
 
-  def fromJson(json: String): Either[io.circe.Error, RootModel] = {
-    decode[RootModel](g.decodeURIComponent(json).asInstanceOf[String])
+  override def decode(json: String) = {
+    io.circe.parser.decode[RootModel](g.decodeURIComponent(json).asInstanceOf[String]).toOption
   }
-
-  implicit class ByteBufferOpt(data: ByteBuffer) {
-    def toArrayBuffer: ArrayBuffer = {
-      if (data.hasTypedArray()) {
-        // get relevant part of the underlying typed array
-        data.typedArray().subarray(data.position, data.limit).buffer
-      } else {
-        // fall back to copying the data
-        val tempBuffer = ByteBuffer.allocateDirect(data.remaining)
-        val origPosition = data.position
-        tempBuffer.put(data)
-        data.position(origPosition)
-        tempBuffer.typedArray().buffer
-      }
-    }
-  }
-
 }

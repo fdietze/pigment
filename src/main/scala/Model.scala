@@ -109,11 +109,12 @@ class ExportProcessor extends ActionProcessor[RootModel] {
   )
 
   def process(dispatch: diode.Dispatcher, action: Any, next: Any => diode.ActionResult[RootModel], currentModel: RootModel): ActionResult[RootModel] = {
+    val codec = Base64Codec
     action match {
       case ImportHash =>
         // println("importing from hash...")
         val encoded = g.decodeURIComponent(window.location.hash.tail).asInstanceOf[String]
-        export.fromBase64(encoded).map { newModel =>
+        codec.decode(encoded).map { newModel =>
           // println("importing from hash successful.")
           ActionResult.ModelUpdate(newModel)
         } getOrElse
@@ -121,12 +122,12 @@ class ExportProcessor extends ActionProcessor[RootModel] {
 
       case ExportHash =>
         // println("exporting to hash.")
-        val encoded = export.toBase64(currentModel)
+        val encoded = codec.encode(currentModel)
         val hash = s"#${g.encodeURIComponent(encoded).asInstanceOf[String]}"
 
         // history.pushState
         // this does not trigger the event "hashchang"
-        // and as a nice byproduct makes the back-button an undo-button.
+        // and as a nice byproduct it makes the back-button an undo-button.
         window.history.pushState(null, null, hash)
         // window.location.hash = hash
 
