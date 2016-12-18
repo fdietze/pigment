@@ -1,5 +1,5 @@
 # Pigment
-[Online Demo](https://fdietze.github.io/pigment#%7B%22colorScheme%22%3A%7B%221%22%3A%5B%5B72%2C103.31%2C1.83%5D%2C%5B48.5%2C53.06%2C2.51%5D%2C%5B81.7%2C110.71%2C0.73%5D%2C%5B73.5%2C109.32%2C4.95%5D%5D%2C%223%22%3A%5B%5B31.6%2C93.72%2C1.22%5D%5D%7D%2C%22locked%22%3A%5B%5D%2C%22fitnessFunction%22%3A%7B%22terms%22%3A%5B%5D%7D%7D)
+[Online Demo](https://fdietze.github.io/pigment#AAACAQQDAAAAZmaOQo9L2EKAEvE%2FAwAAAAAANkKwoXdCFHMtQAMAAACamaNChMTiQuhKOz8DAAAAAACZQrDD1EI%2FlZ5AAwEDAAAAZmbmQdC6vkJreps%2FAAAA)
 
 ![demo](demo.gif)
 
