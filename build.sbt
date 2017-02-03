@@ -6,8 +6,8 @@ scalaVersion := "2.12.1"
 
 val circeVersion = "0.6.1"
 libraryDependencies ++= (
-  "com.github.fdietze" %%% "pharg" % "0.1.0-SNAPSHOT" ::
-  "com.github.fdietze" %%% "vectory" % "0.1.0-SNAPSHOT" ::
+  "com.github.fdietze" %%% "pharg" % "0.1.0" ::
+  "com.github.fdietze" %%% "vectory" % "0.1.0" ::
   "com.github.japgolly.scalajs-react" %%% "core" % "0.11.3" ::
   "me.chrons" %%% "diode" % "1.1.0" ::
   "me.chrons" %%% "diode-react" % "1.1.0" ::
