@@ -47,6 +47,9 @@ object Main extends js.JSApp {
           DistanceListView(m),
           MatrixView(m)
         // OptimizationView(m)
+        ),
+        <.div(
+          ExportView(m)
         )
       )
     }
